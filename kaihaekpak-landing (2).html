@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ไก่แหกปาก — ข้าวไก่กรอบ ส่งตรงถึงหน้าประตู</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700;800;900&family=Sarabun:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --ink:#2b2119;
+    --cream:#fffdf9;
+    --paper:#ffffff;
+    --surface-2:#f4ece0;
+    --chili:#ff4d3d;
+    --chili-deep:#d62a1e;
+    --mango:#e59410;
+    --mango-deep:#b9740a;
+    --maroon:#3a120c;
+    --maroon-deep:#210a06;
+    --muted:#9a8b78;
+    --line:rgba(60,40,20,0.10);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Sarabun',sans-serif; color:var(--ink); background:var(--cream);
+    -webkit-font-smoothing:antialiased;
+  }
+  .display{ font-family:'Kanit',sans-serif; }
+  .mono{ font-family:'Space Mono',monospace; }
+  a{color:inherit; text-decoration:none;}
+  .tile{display:block;}
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 32px; }
+  button{ font-family:inherit; cursor:pointer; }
+
+  /* ---------- FOOD TILES ---------- */
+  .tile{
+    border-radius:22px; display:flex; align-items:center; justify-content:center;
+    position:relative; overflow:hidden; flex-shrink:0;
+  }
+  .tile::after{
+    content:""; position:absolute; inset:0;
+    background:radial-gradient(120% 90% at 25% 15%, rgba(255,255,255,0.35), transparent 55%);
+  }
+  .tile .emoji{ font-size:44%; filter:drop-shadow(0 6px 10px rgba(0,0,0,0.18)); }
+  .tile.korean{ background:linear-gradient(150deg,#ffd0a3,#ef8a3f); }
+  .tile.spicy{ background:linear-gradient(150deg,#ffb199,#ff5b42); }
+  .tile.malah{ background:linear-gradient(150deg,#f0a89a,#c9483a); }
+  .tile.teriyaki{ background:linear-gradient(150deg,#ffe0a0,#f0ad3c); }
+  .tile.mayo{ background:linear-gradient(150deg,#fff0c8,#f0c96a); }
+  .tile.wing{ background:linear-gradient(150deg,#ffc79e,#e87c3e); }
+  .tile.yum{ background:linear-gradient(150deg,#d7ecc7,#9fce8a); }
+  .tile.fries{ background:linear-gradient(150deg,#ffe6a8,#f2ba52); }
+
+  /* ---------- NAV / HERO ---------- */
+  .hero{
+    background:
+      radial-gradient(700px 420px at 85% -10%, rgba(255,255,255,0.05), transparent 60%),
+      linear-gradient(165deg, var(--maroon), var(--maroon-deep));
+    color:#fff; border-radius:0 0 36px 36px; overflow:hidden; position:relative;
+  }
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:26px 0 10px;
+  }
+  .logo{ display:flex; align-items:center; gap:9px; font-weight:800; font-size:20px; font-family:'Kanit',sans-serif; }
+  .logo .pak{ color:var(--chili); }
+  .logo-mark{
+    width:32px; height:32px; border-radius:9px; background:var(--mango);
+    display:flex; align-items:center; justify-content:center; font-size:17px;
+  }
+  .nav-links{ display:flex; gap:34px; font-size:14.5px; font-weight:500; color:rgba(255,255,255,0.82); }
+  .nav-links a:hover{ color:#fff; }
+  .nav-right{ display:flex; align-items:center; gap:14px; }
+  .cart-pill{
+    display:flex; align-items:center; gap:6px; font-size:14px; font-weight:600;
+    padding:9px 14px; border-radius:999px; background:rgba(255,255,255,0.1);
+    border:1px solid rgba(255,255,255,0.16); color:#fff;
+  }
+  .btn-ghost-light{
+    padding:10px 22px; border-radius:999px; border:1.5px solid rgba(255,255,255,0.5);
+    background:transparent; color:#fff; font-weight:600; font-size:14px;
+  }
+
+  .hero-body{
+    display:grid; grid-template-columns:1.05fr 0.95fr; gap:20px;
+    padding:44px 0 70px; align-items:center;
+  }
+  .eyebrow-stars{ color:var(--mango); font-size:13px; letter-spacing:2px; margin-bottom:10px; }
+  .hero-title{
+    font-size:50px; line-height:1.06; font-weight:800; letter-spacing:-1px;
+  }
+  .hero-copy{
+    margin-top:18px; font-size:15px; line-height:1.7; color:rgba(255,255,255,0.72); max-width:400px;
+  }
+  .btn-gold{
+    margin-top:26px; display:inline-block; background:var(--mango); color:#2b1a03;
+    font-weight:700; font-size:14.5px; padding:15px 30px; border-radius:14px; border:none;
+    box-shadow:0 10px 22px rgba(229,148,16,0.35);
+  }
+  .hero-visual{ position:relative; display:flex; justify-content:center; }
+  .hero-quote{
+    position:absolute; top:-6px; left:14px; max-width:220px;
+    font-size:12.5px; color:rgba(255,255,255,0.85); line-height:1.5;
+  }
+  .hero-quote .stars{ color:var(--mango); font-size:12px; margin-bottom:4px; }
+  .hero-burger{
+    width:300px; height:300px; border-radius:32px;
+    background:radial-gradient(circle at 35% 30%, #ffd7ad, #e87c3e 70%);
+    display:flex; align-items:center; justify-content:center; font-size:150px;
+    box-shadow:0 30px 60px rgba(0,0,0,0.4);
+    transform:rotate(-2deg);
+  }
+  .hero-side-card{
+    position:absolute; right:-6px; top:36px; width:104px; background:var(--paper);
+    border-radius:20px; padding:10px; text-align:center; box-shadow:0 14px 30px rgba(0,0,0,0.3);
+  }
+  .hero-side-card .avatar{
+    width:100%; height:70px; border-radius:14px;
+    background:linear-gradient(150deg,#d7ecc7,#9fce8a);
+    display:flex; align-items:center; justify-content:center; font-size:30px; margin-bottom:8px;
+  }
+  .avatars-row{ position:absolute; right:6px; top:150px; display:flex; align-items:center; gap:8px; }
+  .avatar-stack{ display:flex; }
+  .avatar-stack span{
+    width:26px; height:26px; border-radius:999px; background:var(--mango);
+    border:2px solid var(--maroon); margin-left:-8px; display:flex; align-items:center; justify-content:center; font-size:12px;
+  }
+  .avatars-row .stat{ font-size:11.5px; color:rgba(255,255,255,0.8); }
+  .avatars-row .stat b{ color:#fff; display:block; font-size:12.5px; }
+
+  /* ---------- SECTIONS ---------- */
+  .section{ padding:64px 0; }
+  .section-head{ display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:28px; gap:20px; }
+  .section-title{ font-size:27px; font-weight:700; letter-spacing:-0.4px; }
+  .section-sub{ font-size:13.5px; color:var(--muted); margin-top:6px; max-width:360px; line-height:1.6; }
+  .link-arrow{ font-size:13.5px; font-weight:600; color:var(--chili-deep); white-space:nowrap; }
+
+  /* ---------- PROMO BENTO ---------- */
+  .promo-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .promo-stack{ display:grid; gap:18px; }
+  .promo-card{
+    border-radius:26px; padding:26px; position:relative; overflow:hidden; color:#fff; min-height:170px;
+    display:flex; flex-direction:column; justify-content:space-between;
+  }
+  .promo-card.yellow{ background:linear-gradient(135deg,#ffcf6b,var(--mango)); color:#2b1a03; }
+  .promo-card.maroon{ background:linear-gradient(135deg,var(--maroon),var(--maroon-deep)); }
+  .promo-card.coral{ background:linear-gradient(135deg,var(--chili),var(--chili-deep)); min-height:100%; }
+  .promo-tag{ font-size:12px; font-weight:700; letter-spacing:0.5px; opacity:0.85; }
+  .promo-title{ font-family:'Kanit',sans-serif; font-weight:800; font-size:23px; line-height:1.15; margin-top:6px; }
+  .promo-foot{ display:flex; align-items:flex-end; justify-content:space-between; margin-top:16px; }
+  .promo-btn{
+    border:none; border-radius:999px; padding:9px 16px; font-size:12.5px; font-weight:700;
+    background:rgba(0,0,0,0.14); color:#fff;
+  }
+  .promo-card.yellow .promo-btn{ background:rgba(0,0,0,0.1); color:#2b1a03; }
+  .promo-discount{ font-family:'Kanit',sans-serif; font-weight:800; font-size:24px; text-align:right; line-height:1.05; }
+  .promo-discount span{ display:block; font-size:11px; font-weight:600; opacity:0.8; }
+  .promo-badge{
+    position:absolute; top:22px; right:22px; width:58px; height:58px; border-radius:999px;
+    background:var(--paper); color:var(--chili-deep); display:flex; flex-direction:column;
+    align-items:center; justify-content:center; font-family:'Kanit',sans-serif; font-weight:800;
+    font-size:14px; line-height:1; box-shadow:0 8px 18px rgba(0,0,0,0.25);
+  }
+  .promo-badge span{ font-size:8.5px; font-weight:600; margin-top:2px; }
+
+  /* ---------- DISH CARDS ---------- */
+  .dish-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .dish-card{
+    background:var(--paper); border:1px solid var(--line); border-radius:22px; padding:16px;
+    transition:transform 0.2s, box-shadow 0.2s;
+  }
+  .dish-card:hover{ transform:translateY(-4px); box-shadow:0 16px 30px rgba(60,40,20,0.08); }
+  .dish-card .tile{ width:100%; height:140px; margin-bottom:14px; }
+  .dish-card .tile .emoji{ font-size:52px; }
+  .dish-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+  .dish-name{ font-weight:700; font-size:15px; line-height:1.35; }
+  .rating{
+    flex-shrink:0; display:flex; align-items:center; gap:3px; font-size:12px; font-weight:700;
+    color:var(--mango-deep); background:#fdf2da; padding:4px 8px; border-radius:999px;
+  }
+  .dish-meta{ font-size:12px; color:var(--muted); margin-top:5px; line-height:1.5; }
+  .dish-foot{ display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
+  .dish-price{ font-family:'Kanit',sans-serif; font-weight:700; font-size:16px; }
+  .price-old{ font-size:12px; color:var(--muted); text-decoration:line-through; margin-left:6px; font-weight:500; }
+  .add-round{
+    width:34px; height:34px; border-radius:999px; border:none;
+    background:linear-gradient(135deg,var(--chili),var(--chili-deep)); color:#fff;
+    font-size:17px; display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ---------- CATEGORY / SAUCE EXPLORER ---------- */
+  .category-section{ background:#fbf0dd; border-radius:36px; }
+  .category-layout{ display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center; }
+  .category-stage{ position:relative; height:340px; display:flex; align-items:center; justify-content:center; }
+  .category-plate{
+    width:210px; height:210px; border-radius:999px;
+    background:radial-gradient(circle at 35% 30%, #ffd7ad, #d65a2c 75%);
+    display:flex; align-items:center; justify-content:center; font-size:100px;
+    box-shadow:0 24px 50px rgba(0,0,0,0.22);
+  }
+  .cat-chip{
+    position:absolute; background:var(--paper); border-radius:16px; padding:12px 14px;
+    display:flex; align-items:center; gap:10px; box-shadow:0 12px 26px rgba(60,40,20,0.12);
+    font-size:12.5px; width:150px;
+  }
+  .cat-chip .ic{ width:32px; height:32px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .cat-chip b{ display:block; font-size:12.5px; font-weight:700; }
+  .cat-chip small{ color:var(--muted); font-size:10.5px; }
+  .cat-1{ top:0px; left:-30px; }
+  .cat-2{ top:145px; left:-60px; }
+  .cat-3{ bottom:-6px; left:26px; }
+  .cat-4{ top:8px; right:-40px; }
+  .cat-5{ top:150px; right:-60px; }
+  .cat-text .section-title{ margin-bottom:8px; }
+  .btn-forest{
+    margin-top:20px; display:inline-block; background:linear-gradient(135deg,var(--chili),var(--chili-deep));
+    color:#fff; font-weight:700; font-size:14px; padding:13px 26px; border-radius:999px; border:none;
+  }
+
+  /* ---------- FLASH DEALS ---------- */
+  .flash-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  .flash-card{
+    background:var(--paper); border:1px solid var(--line); border-radius:20px; padding:14px;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .flash-row{ display:flex; gap:12px; }
+  .flash-row .tile{ width:64px; height:64px; flex-shrink:0; border-radius:16px; }
+  .flash-row .tile .emoji{ font-size:30px; }
+  .flash-info b{ font-size:13.5px; display:block; line-height:1.35; }
+  .flash-rating{ font-size:11px; color:var(--mango-deep); font-weight:700; margin-top:3px; }
+  .flash-price{ margin-top:4px; font-family:'Kanit',sans-serif; font-weight:700; font-size:14px; }
+  .discount-ribbon{ font-size:10.5px; font-weight:700; color:#fff; background:var(--chili); padding:2px 7px; border-radius:6px; align-self:flex-start; }
+  .flash-bottom{ display:flex; align-items:center; justify-content:space-between; }
+  .countdown{
+    display:flex; align-items:center; gap:3px; background:var(--maroon-deep); color:var(--mango);
+    padding:5px 8px; border-radius:8px; font-size:11.5px; letter-spacing:0.5px;
+  }
+  .add-cart-btn{
+    border:none; background:linear-gradient(135deg,var(--chili),var(--chili-deep)); color:#fff;
+    font-size:12px; font-weight:700; padding:8px 16px; border-radius:999px;
+  }
+
+  footer{
+    background:var(--maroon-deep); color:rgba(255,255,255,0.6); text-align:center;
+    padding:30px 0; font-size:12.5px; border-radius:36px 36px 0 0; margin-top:20px;
+  }
+
+  /* ---------- SHEET OVERLAY (item detail + cart) ---------- */
+  .sheet-overlay{
+    position:fixed; inset:0; background:rgba(20,10,5,0.45); z-index:80;
+    display:flex; align-items:flex-end; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.25s;
+  }
+  .sheet-overlay.show{ opacity:1; pointer-events:auto; }
+  .sheet{
+    background:var(--paper); width:100%; max-width:480px; border-radius:28px 28px 0 0;
+    padding:22px 24px 28px; max-height:86vh; overflow-y:auto;
+    transform:translateY(24px); transition:transform 0.3s cubic-bezier(.34,1.2,.64,1);
+  }
+  .sheet-overlay.show .sheet{ transform:translateY(0); }
+  .sheet-handle{ width:42px; height:5px; border-radius:999px; background:var(--line); margin:0 auto 16px; }
+  .sheet-title{ font-size:20px; font-weight:700; }
+  .sheet-desc{ font-size:13px; color:var(--muted); margin-top:6px; line-height:1.6; }
+  .sheet-price{ font-size:19px; font-weight:800; color:var(--chili-deep); margin-top:10px; }
+  .detail-tile{ width:100%; height:140px; margin-bottom:14px; }
+  .option-group{ margin-top:20px; }
+  .option-label{ font-family:'Kanit',sans-serif; font-size:14px; font-weight:600; margin-bottom:10px; }
+  .option-pills{ display:flex; gap:8px; }
+  .option-pill{
+    flex:1; text-align:center; padding:11px; border-radius:12px;
+    font-family:'Kanit',sans-serif; font-weight:600; font-size:14px;
+    background:var(--surface-2); color:var(--muted);
+    border:1.5px solid transparent; cursor:pointer; transition:all 0.15s;
+  }
+  .option-pill.selected{ background:rgba(255,77,61,0.1); color:var(--chili-deep); border-color:var(--chili); }
+  .qty-row{ display:flex; align-items:center; justify-content:space-between; margin-top:20px; }
+  .qty-row .option-label{ margin-bottom:0; }
+  .detail-stepper, .cart-qty-stepper{ display:flex; align-items:center; gap:0; }
+  .step-btn{
+    width:32px; height:32px; border:none; color:var(--ink); font-size:17px; font-weight:700;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; background:var(--surface-2);
+  }
+  .step-btn.minus{ border-radius:999px 0 0 999px; }
+  .step-btn.plus{ border-radius:0 999px 999px 0; background:linear-gradient(135deg,var(--chili),var(--chili-deep)); color:#fff; }
+  .qty-val{
+    min-width:30px; text-align:center; font-weight:700; font-size:14px;
+    background:var(--surface-2); height:32px; line-height:32px; font-family:'Kanit',sans-serif;
+  }
+  .cart-qty-stepper{ margin-top:8px; }
+  .cart-qty-stepper .qty-val{ min-width:26px; height:26px; line-height:26px; }
+  .cart-qty-stepper .step-btn{ width:26px; height:26px; font-size:14px; }
+  .cart-list{ margin-top:16px; display:flex; flex-direction:column; gap:12px; max-height:44vh; overflow-y:auto; }
+  .cart-row{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+    padding-bottom:12px; border-bottom:1px solid var(--line);
+  }
+  .cart-row .name{ font-weight:700; font-size:14.5px; }
+  .cart-row .sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .cart-row .amt{ font-weight:700; font-size:15px; white-space:nowrap; }
+  .empty-note{ font-size:13.5px; color:var(--muted); text-align:center; padding:24px 0; }
+  .cart-total-row{
+    display:flex; align-items:center; justify-content:space-between; font-weight:700; font-size:16px;
+    margin-top:14px; padding-top:14px; border-top:1.5px solid var(--line);
+  }
+  #checkoutBtn:disabled{ opacity:0.45; cursor:not-allowed; }
+  .dish-card.pulse{ animation:cardPulse 0.3s ease; }
+  @keyframes cardPulse{ 0%{ box-shadow:0 0 0 0 rgba(255,77,61,0.35);} 100%{ box-shadow:0 0 0 10px rgba(255,77,61,0);} }
+
+  .qr-wrap{ text-align:center; padding:4px 0; }
+  .qr-amount{ font-size:30px; font-weight:800; color:var(--chili-deep); }
+  .qr-box{
+    background:#fff; display:inline-block; padding:16px; border-radius:20px; margin:16px 0;
+    box-shadow:0 8px 24px rgba(60,40,20,0.25);
+  }
+  .qr-note{ font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.5; }
+  .qr-order-id{ font-size:12px; color:var(--muted); margin-top:12px; }
+
+  /* ---------- TOAST ---------- */
+  .toast{
+    position:fixed; left:50%; bottom:28px; transform:translate(-50%, 20px);
+    background:var(--maroon-deep); color:#fff; padding:13px 22px; border-radius:999px;
+    font-size:13.5px; font-weight:600; box-shadow:0 12px 28px rgba(0,0,0,0.3);
+    z-index:100; opacity:0; pointer-events:none; transition:all 0.3s;
+    max-width:90%; text-align:center;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%, 0); }
+
+  @media (max-width: 880px){
+    .hero-body{ grid-template-columns:1fr; }
+    .hero-visual{ order:-1; }
+    .hero-title{ font-size:34px; }
+    .nav-links{ display:none; }
+    .promo-grid{ grid-template-columns:1fr; }
+    .dish-grid{ grid-template-columns:1fr 1fr; }
+    .flash-grid{ grid-template-columns:1fr; }
+    .category-layout{ grid-template-columns:1fr; }
+    .category-stage{ height:280px; }
+  }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
+
+  /* ---------- APP-STYLE UI (mobile order screen) ---------- */
+  body{ background:var(--surface-2); }
+  .app-shell{
+    max-width:460px; margin:0 auto; min-height:100vh; background:var(--cream);
+    padding-bottom:118px; position:relative; box-shadow:0 0 60px rgba(43,33,25,0.10);
+  }
+  .app-header{
+    background:linear-gradient(155deg, #e9fbee, #fff7e0 65%);
+    border-radius:0 0 32px 32px; padding:22px 20px 16px;
+  }
+  .loc-row{ display:flex; align-items:center; gap:12px; }
+  .loc-icon-btn, .bell-btn{
+    width:40px; height:40px; border-radius:999px; background:#fff; border:none;
+    display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0;
+    box-shadow:0 4px 10px rgba(43,33,25,0.08);
+  }
+  .loc-text{ flex:1; min-width:0; }
+  .loc-label{ font-size:11px; color:var(--muted); }
+  .loc-value{ display:block; font-family:'Kanit',sans-serif; font-weight:700; font-size:15px; margin-top:1px; }
+  .search-bar{
+    margin-top:16px; background:#fff; border-radius:16px; padding:12px 14px;
+    display:flex; align-items:center; gap:9px; box-shadow:0 6px 16px rgba(43,33,25,0.06);
+  }
+  .search-ic{ font-size:14px; opacity:0.6; }
+  .search-bar input{
+    flex:1; border:none; outline:none; background:transparent; font-family:inherit;
+    font-size:14px; color:var(--ink);
+  }
+  .search-bar input::placeholder{ color:var(--muted); }
+  .cat-tabs{
+    display:flex; gap:22px; margin-top:16px; overflow-x:auto; padding-bottom:8px;
+    border-bottom:1px solid var(--line); scrollbar-width:none;
+  }
+  .cat-tabs::-webkit-scrollbar{ display:none; }
+  .cat-tab{
+    flex-shrink:0; background:none; border:none; font-family:inherit; font-size:14px;
+    font-weight:600; color:var(--muted); padding-bottom:9px; white-space:nowrap;
+    border-bottom:3px solid transparent; margin-bottom:-1px;
+  }
+  .cat-tab.active{ color:var(--ink); border-bottom-color:var(--chili-deep); }
+
+  .menu-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:20px 20px 0;
+  }
+  .food-card{
+    border-radius:24px; padding:16px 16px 14px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+  .food-card.fc-a{ background:linear-gradient(160deg,#ffe1ec,#ffb4d0); }
+  .food-card.fc-b{ background:linear-gradient(160deg,#ddf6d2,#a8e39a); }
+  .food-card.fc-c{ background:linear-gradient(160deg,#ffe0d0,#ffab8a); }
+  .food-card.fc-d{ background:linear-gradient(160deg,#d8ecff,#9dc9f5); }
+  .food-card.fc-e{ background:linear-gradient(160deg,#fff2c2,#ffd76b); }
+  .food-card.fc-f{ background:linear-gradient(160deg,#e7ddff,#c3aaf5); }
+  .food-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:6px; }
+  .food-name{ font-size:13.5px; font-weight:700; line-height:1.3; }
+  .fav-btn{
+    flex-shrink:0; width:26px; height:26px; border-radius:999px; border:none;
+    background:rgba(255,255,255,0.65); font-size:12px; display:flex; align-items:center; justify-content:center;
+  }
+  .food-price{ margin-top:6px; font-size:16px; font-weight:700; }
+  .food-img-wrap{
+    position:relative; height:104px; margin-top:10px; display:flex; align-items:center; justify-content:center;
+  }
+  .food-emoji{ font-size:66px; filter:drop-shadow(0 8px 10px rgba(0,0,0,0.16)); }
+  .add-btn{
+    position:absolute; left:-4px; bottom:-6px; width:36px; height:36px; border-radius:999px;
+    background:rgba(20,10,5,0.78); color:#fff; border:none; font-size:19px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .tag-ribbon{
+    position:absolute; right:-4px; bottom:0; background:rgba(255,255,255,0.85); color:var(--maroon);
+    font-size:9.5px; font-weight:700; padding:5px 9px; border-radius:8px; white-space:nowrap;
+  }
+
+  .bottom-nav{
+    position:fixed; left:50%; bottom:0; transform:translateX(-50%); width:100%; max-width:460px;
+    background:#fff; display:flex; align-items:center; justify-content:space-around;
+    padding:10px 6px 22px; border-radius:26px 26px 0 0; box-shadow:0 -8px 24px rgba(43,33,25,0.10); z-index:60;
+  }
+  .nav-item{
+    background:none; border:none; display:flex; flex-direction:column; align-items:center; gap:3px;
+    font-family:inherit; font-size:10.5px; font-weight:600; color:var(--muted);
+  }
+  .nav-item .ic{ font-size:19px; }
+  .nav-item.active{ color:var(--chili-deep); }
+  .fab-cart{
+    position:relative; width:56px; height:56px; border-radius:999px; margin-top:-30px; flex-shrink:0;
+    background:linear-gradient(135deg,var(--chili),var(--chili-deep)); border:none; color:#fff; font-size:22px;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 10px 22px rgba(255,77,61,0.4);
+  }
+  .fab-badge{
+    position:absolute; top:-3px; right:-3px; background:var(--mango-deep); color:#fff; font-size:10px;
+    font-weight:700; min-width:18px; height:18px; border-radius:999px; display:flex; align-items:center;
+    justify-content:center; padding:0 4px; border:2px solid #fff;
+  }
+
+  @media (max-width: 460px){
+    .app-shell{ box-shadow:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <div class="app-header">
+    <div class="loc-row">
+      <div class="loc-icon-btn">📍</div>
+      <div class="loc-text">
+        <span class="loc-label">จัดส่งด่วนถึง</span>
+        <b class="loc-value">เชียงใหม่, ไทย</b>
+      </div>
+      <button class="bell-btn" onclick="toast('ยังไม่มีการแจ้งเตือนใหม่')">🔔</button>
+    </div>
+    <div class="search-bar">
+      <span class="search-ic">🔍</span>
+      <input id="searchInput" placeholder="ค้นหาเมนู เช่น หม่าล่า, ฟรายส์..." oninput="onSearchInput(event)">
+    </div>
+    <div class="cat-tabs" id="catTabs">
+      <button class="cat-tab active" data-cat="all" onclick="setCategory('all')">ทั้งหมด</button>
+      <button class="cat-tab" data-cat="rice" onclick="setCategory('rice')">เมนูข้าว</button>
+      <button class="cat-tab" data-cat="snack" onclick="setCategory('snack')">ของทานเล่น</button>
+    </div>
+  </div>
+
+  <div class="menu-grid" id="menuGrid">
+    <div class="empty-note" style="grid-column:1/-1;">กำลังโหลดเมนู...</div>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <button class="nav-item active" onclick="window.scrollTo({top:0,behavior:'smooth'})"><span class="ic">🏠</span>หน้าแรก</button>
+  <button class="nav-item" onclick="toast('ฟีเจอร์นี้กำลังจะมาเร็วๆ นี้')"><span class="ic">💬</span>ข้อความ</button>
+  <button class="fab-cart" onclick="openCart()">🛍️<span class="fab-badge" id="cartCount">0</span></button>
+  <button class="nav-item" onclick="toast('ฟีเจอร์นี้กำลังจะมาเร็วๆ นี้')"><span class="ic">🤍</span>ถูกใจ</button>
+  <button class="nav-item" onclick="toast('ฟีเจอร์นี้กำลังจะมาเร็วๆ นี้')"><span class="ic">👤</span>โปรไฟล์</button>
+</div>
+
+
+<div class="sheet-overlay" id="itemOverlay" onclick="if(event.target===this) closeItemDetail()">
+  <div class="sheet" id="itemSheet"></div>
+</div>
+
+<div class="sheet-overlay" id="cartOverlay" onclick="if(event.target===this) closeCart()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title display">ตะกร้าของคุณ</div>
+    <div id="cartList" class="cart-list"></div>
+    <div class="cart-total-row">
+      <span>ยอดรวม</span>
+      <span id="cartTotalAmt" class="display">฿0</span>
+    </div>
+    <button class="btn-gold" id="checkoutBtn" style="width:100%; text-align:center; margin-top:14px;" onclick="goToPayment()">ชำระเงิน</button>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="qrOverlay" onclick="if(event.target===this) closeQr()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title display">สแกนจ่ายด้วย PromptPay</div>
+    <div class="qr-wrap">
+      <div class="qr-amount display" id="qrAmount">฿0</div>
+      <div class="qr-box" id="qrCanvas"></div>
+      <div class="qr-note">สแกนจากแอปธนาคารใดก็ได้ • ระบบไม่เก็บข้อมูลบัตร</div>
+      <div class="qr-order-id mono" id="qrOrderId"></div>
+    </div>
+    <button class="btn-gold" style="width:100%; text-align:center; margin-top:10px; background:var(--surface-2); color:var(--ink); box-shadow:none;" onclick="closeQr()">เสร็จสิ้น / กลับไปสั่งต่อ</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PROMPTPAY_ID = "0812345678"; // TODO: ใส่เบอร์พร้อมเพย์หรือเลขผู้เสียภาษีร้านจริง
+
+// ================================================================
+// ระบบเมนู "หลังบ้าน": ดึงข้อมูลเมนูจาก Google Sheet ที่ Publish to web เป็น CSV
+// วิธีตั้งค่า (ทำครั้งเดียว):
+// 1) สร้าง Google Sheet 1 แผ่น ใส่หัวคอลัมน์แถวแรกตามนี้เป๊ะๆ:
+//    id,type,name,price,rating,emoji,tile,desc,noVeggie,sizes,sauces
+// 2) เพิ่มแถวเมนู เช่น
+//    korean,rice,ข้าวไก่กรอบซอสเกาหลี,60,5,🍗,korean,ไก่กรอบชิ้นโต คลุกซอสเกาหลีเข้มข้น,FALSE,,
+//    fries,snack,เฟรนช์ฟรายส์,,5,🍟,fries,ฟรายส์ทอดกรอบร้อนๆ,,M|ไซส์ M (150 กรัม)|39;L|ไซส์ L (250 กรัม)|49,ketchup|ซอสมะเขือเทศ|0;cheese|ซอสชีส (+5฿)|5
+//    - คอลัมน์ type ใส่ได้แค่ "rice" หรือ "snack"
+//    - คอลัมน์ tile ใช้สีพื้นได้แค่: korean, spicy, malah, teriyaki, mayo, wing, yum, fries
+//    - เมนูข้าว: กรอก price ปกติ, เว้น sizes/sauces ว่าง
+//    - เมนูของทานเล่น (มีเลือกไซส์/ซอส): เว้น price ว่าง แล้วกรอก sizes/sauces ตามฟอร์แมต "key|ชื่อ|ราคา" คั่นด้วย ;
+// 3) ไฟล์ > แชร์ > เผยแพร่ทางเว็บ (Publish to web) > เลือกแผ่นงานนี้ > รูปแบบ CSV > เผยแพร่
+// 4) คัดลอกลิงก์ที่ได้มาวางแทนค่า SHEET_CSV_URL ด้านล่าง
+// จากนั้นแก้ราคา/ชื่อ/คำอธิบาย/ดาว/เปิดปิดเมนู ได้จากใน Sheet โดยตรง ไม่ต้องแก้โค้ดเลย
+// ถ้าไม่ตั้งค่า (เว้นเป็นค่าว่าง) หรือโหลดไม่ได้ ระบบจะใช้เมนูสำรอง (DEFAULT_MENU) แทนอัตโนมัติ
+// ================================================================
+const SHEET_CSV_URL = ""; // <-- วางลิงก์ CSV ที่ publish ไว้ตรงนี้
+
+const DEFAULT_MENU = {
+  korean:     { type: "rice", name: "ข้าวไก่กรอบซอสเกาหลี",       price: 60, rating: 5, emoji: "🍗", tile: "korean", desc: "ไก่กรอบชิ้นโต คลุกซอสเกาหลีเข้มข้น หวาน เผ็ด กลมกล่อม" },
+  malah:      { type: "rice", name: "ข้าวไก่กรอบซอสหม่าล่า 🔥",         price: 60, rating: 5, emoji: "🍗", tile: "malah", desc: "สูตรโฮมเมดของร้าน หอมเครื่องเทศ ชาลิ้นนิดๆ เผ็ดกำลังดี" },
+  wing:       { type: "rice", name: "ข้าวไก่กรอบวิงแซ่บ 🌶️",           price: 55, rating: 5, emoji: "🍗", tile: "wing", desc: "คลุกผงวิงแซ่บรสเข้มข้น เปรี้ยว เค็ม เผ็ด ครบรส" },
+  teriyaki:   { type: "rice", name: "ข้าวไก่กรอบซอสเทอริยากิ 🍯",       price: 55, rating: 5, emoji: "🍗", tile: "teriyaki", desc: "หอมกลิ่นโชยุ หวานเค็มกำลังดี เคลือบไก่กรอบแบบฉ่ำๆ" },
+  mayocheese: { type: "rice", name: "ข้าวไก่กรอบซอสมายองเนสชีส 🧀",     price: 60, rating: 5, emoji: "🍗", tile: "mayo", desc: "มายองเนสเนื้อเนียน ผสานชีสหอมมัน ละมุนทุกคำ" },
+  yumkai:     { type: "rice", name: "ข้าวยำไก่แซ่บ 🥗",                  price: 60, rating: 5, emoji: "🥗", tile: "yum", desc: "คลุกน้ำยำรสจัดจ้าน เสิร์ฟพร้อมผักสด กินแล้วสดชื่น", noVeggie: true },
+  fries:      { type: "snack", name: "เฟรนช์ฟรายส์ 🍟", rating: 5, emoji: "🍟", tile: "fries",
+    desc: "ฟรายส์ทอดกรอบร้อนๆ เลือกไซส์และซอสได้เอง",
+    sizes: [
+      { key: "M", label: "ไซส์ M (150 กรัม)", price: 39 },
+      { key: "L", label: "ไซส์ L (250 กรัม)", price: 49 },
+    ],
+    sauces: [
+      { key: "ketchup", label: "ซอสมะเขือเทศ", extra: 0 },
+      { key: "cheese", label: "ซอสชีส (+5฿)", extra: 5 },
+    ]
+  },
+};
+
+let MENU = DEFAULT_MENU;
+
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i], next = text[i+1];
+    if (inQuotes){
+      if (c === '"' && next === '"'){ field += '"'; i++; }
+      else if (c === '"'){ inQuotes = false; }
+      else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ','){ row.push(field); field = ''; }
+      else if (c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+      else if (c === '\r'){ /* skip */ }
+      else field += c;
+    }
+  }
+  if (field.length || row.length){ row.push(field); rows.push(row); }
+  if (!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1).filter(r => r.some(v => v.trim() !== '')).map(r => {
+    const obj = {};
+    headers.forEach((h, idx) => obj[h] = (r[idx] || '').trim());
+    return obj;
+  });
+}
+
+function parseOptionList(str, priceKey){
+  if (!str) return [];
+  return str.split(';').filter(Boolean).map(part => {
+    const [key, label, price] = part.split('|');
+    return { key: key.trim(), label: label.trim(), [priceKey]: Number(price) || 0 };
+  });
+}
+
+function rowsToMenu(rows){
+  const menu = {};
+  rows.forEach(r => {
+    if (!r.id || !r.type) return;
+    const item = {
+      type: r.type,
+      name: r.name,
+      rating: Number(r.rating) || 5,
+      emoji: r.emoji || '🍗',
+      tile: r.tile || 'korean',
+      desc: r.desc || '',
+    };
+    if (r.type === 'snack'){
+      item.sizes = parseOptionList(r.sizes, 'price');
+      item.sauces = parseOptionList(r.sauces, 'extra');
+    } else {
+      item.price = Number(r.price) || 0;
+      if (String(r.noVeggie).toUpperCase() === 'TRUE') item.noVeggie = true;
+    }
+    menu[r.id.trim()] = item;
+  });
+  return menu;
+}
+
+function priceLabel(item){
+  if (item.type === 'snack' && item.sizes && item.sizes.length){
+    return `เริ่มต้น ฿${Math.min(...item.sizes.map(s => s.price))}`;
+  }
+  return `฿${item.price}`;
+}
+
+function categoryLabel(type){
+  return type === 'rice' ? 'เมนูข้าว' : 'ของทานเล่น';
+}
+
+const CARD_PALETTE = ['fc-a','fc-b','fc-c','fc-d','fc-e','fc-f'];
+
+function dishCardHtml(id, item, idx){
+  const paletteClass = CARD_PALETTE[idx % CARD_PALETTE.length];
+  return `
+    <div class="food-card ${paletteClass}" id="card-${id}">
+      <div class="food-top">
+        <div class="food-name">${item.name}</div>
+        <button class="fav-btn" onclick="toggleHeart(this)">🤍</button>
+      </div>
+      <div class="food-price display">${priceLabel(item)}</div>
+      <div class="food-img-wrap">
+        <div class="food-emoji">${item.emoji}</div>
+        <button class="add-btn" onclick="openItemDetail('${id}')">+</button>
+        <div class="tag-ribbon">${categoryLabel(item.type)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleHeart(btn){
+  btn.classList.toggle('liked');
+  btn.textContent = btn.classList.contains('liked') ? '❤️' : '🤍';
+}
+
+let currentCategory = 'all';
+let searchQuery = '';
+
+function setCategory(cat){
+  currentCategory = cat;
+  document.querySelectorAll('.cat-tab').forEach(el => el.classList.toggle('active', el.dataset.cat === cat));
+  renderMenu();
+}
+
+function onSearchInput(e){
+  searchQuery = e.target.value.trim().toLowerCase();
+  renderMenu();
+}
+
+function renderMenu(){
+  const grid = document.getElementById('menuGrid');
+  let ids = Object.keys(MENU);
+  if (currentCategory !== 'all') ids = ids.filter(id => MENU[id].type === currentCategory);
+  if (searchQuery) ids = ids.filter(id =>
+    MENU[id].name.toLowerCase().includes(searchQuery) ||
+    (MENU[id].desc || '').toLowerCase().includes(searchQuery)
+  );
+  grid.innerHTML = ids.length
+    ? ids.map((id, idx) => dishCardHtml(id, MENU[id], idx)).join('')
+    : '<div class="empty-note" style="grid-column:1/-1;">ไม่พบเมนูที่ค้นหา</div>';
+}
+
+async function loadMenu(){
+  if (!SHEET_CSV_URL){ MENU = DEFAULT_MENU; renderMenu(); return; }
+  try {
+    const res = await fetch(SHEET_CSV_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('fetch failed');
+    const text = await res.text();
+    const rows = parseCSV(text);
+    const menu = rowsToMenu(rows);
+    MENU = Object.keys(menu).length ? menu : DEFAULT_MENU;
+  } catch (e){
+    console.warn('โหลดเมนูจาก Sheet ไม่สำเร็จ ใช้เมนูสำรองแทน', e);
+    MENU = DEFAULT_MENU;
+  }
+  renderMenu();
+}
+loadMenu();
+
+let cartLines = []; // { lineId, id, name, unitPrice, qty, optionText, matchKey }
+let detailState = { itemId: null, qty: 1, utensils: true, veggie: true, size: null, salt: true, sauce: 'ketchup' };
+
+function unitPriceFor(item){
+  if (item.type === 'snack'){
+    const size = item.sizes.find(s => s.key === detailState.size);
+    const sauce = item.sauces.find(s => s.key === detailState.sauce);
+    return size.price + sauce.extra;
+  }
+  return item.price;
+}
+
+function openItemDetail(id){
+  const item = MENU[id];
+  detailState = {
+    itemId: id, qty: 1,
+    utensils: true, veggie: true,
+    size: item.type === 'snack' ? item.sizes[0].key : null,
+    salt: true, sauce: 'ketchup'
+  };
+  renderItemDetail(item);
+  document.getElementById('itemOverlay').classList.add('show');
+}
+function closeItemDetail(){
+  document.getElementById('itemOverlay').classList.remove('show');
+}
+function renderItemDetail(item){
+  const sheet = document.getElementById('itemSheet');
+  const unit = unitPriceFor(item);
+
+  let optionsHtml = '';
+  if (item.type === 'snack'){
+    optionsHtml = `
+      <div class="option-group">
+        <div class="option-label">เลือกไซส์</div>
+        <div class="option-pills">
+          ${item.sizes.map(s => `
+            <div class="option-pill ${detailState.size === s.key ? 'selected' : ''}" onclick="setDetailOption('size', '${s.key}')">${s.label}<br>฿${s.price}</div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option-label">คลุกเกลือไหม?</div>
+        <div class="option-pills">
+          <div class="option-pill ${detailState.salt ? 'selected' : ''}" onclick="setDetailOption('salt', true)">คลุกเกลือ</div>
+          <div class="option-pill ${!detailState.salt ? 'selected' : ''}" onclick="setDetailOption('salt', false)">ไม่คลุกเกลือ</div>
+        </div>
+      </div>
+      <div class="option-group">
+        <div class="option-label">ซอส</div>
+        <div class="option-pills">
+          ${item.sauces.map(s => `
+            <div class="option-pill ${detailState.sauce === s.key ? 'selected' : ''}" onclick="setDetailOption('sauce', '${s.key}')">${s.label}</div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  } else {
+    optionsHtml = `
+      <div class="option-group">
+        <div class="option-label">รับช้อนส้อมไหม?</div>
+        <div class="option-pills">
+          <div class="option-pill ${detailState.utensils ? 'selected' : ''}" onclick="setDetailOption('utensils', true)">รับ</div>
+          <div class="option-pill ${!detailState.utensils ? 'selected' : ''}" onclick="setDetailOption('utensils', false)">ไม่รับ</div>
+        </div>
+      </div>
+      ${!item.noVeggie ? `
+      <div class="option-group">
+        <div class="option-label">ใส่ผักไหม?</div>
+        <div class="option-pills">
+          <div class="option-pill ${detailState.veggie ? 'selected' : ''}" onclick="setDetailOption('veggie', true)">ใส่ผัก</div>
+          <div class="option-pill ${!detailState.veggie ? 'selected' : ''}" onclick="setDetailOption('veggie', false)">ไม่ใส่ผัก</div>
+        </div>
+      </div>` : ''}
+    `;
+  }
+
+  sheet.innerHTML = `
+    <div class="sheet-handle"></div>
+    <div class="detail-tile tile ${item.tile}"><span class="emoji" style="font-size:56px;">${item.emoji}</span></div>
+    <div class="sheet-title display">${item.name}</div>
+    <div class="sheet-desc">${item.desc}</div>
+    <div class="sheet-price display" id="detailUnitPrice">฿${unit}</div>
+
+    ${optionsHtml}
+
+    <div class="qty-row">
+      <div class="option-label">จำนวน</div>
+      <div class="detail-stepper">
+        <button class="step-btn minus" onclick="changeDetailQty(-1)">−</button>
+        <div class="qty-val" id="detailQty">${detailState.qty}</div>
+        <button class="step-btn plus" onclick="changeDetailQty(1)">+</button>
+      </div>
+    </div>
+
+    <button class="btn-gold" style="width:100%; text-align:center; margin-top:18px;" onclick="addToCart()">เพิ่มลงตะกร้า • ฿<span id="detailLineTotal">${unit * detailState.qty}</span></button>
+  `;
+}
+function setDetailOption(key, val){
+  detailState[key] = val;
+  renderItemDetail(MENU[detailState.itemId]);
+}
+function changeDetailQty(delta){
+  detailState.qty = Math.max(1, detailState.qty + delta);
+  const item = MENU[detailState.itemId];
+  const unit = unitPriceFor(item);
+  document.getElementById('detailQty').textContent = detailState.qty;
+  document.getElementById('detailUnitPrice').textContent = `฿${unit}`;
+  document.getElementById('detailLineTotal').textContent = unit * detailState.qty;
+}
+function addToCart(){
+  const item = MENU[detailState.itemId];
+  const unitPrice = unitPriceFor(item);
+  let optionText, matchKey;
+
+  if (item.type === 'snack'){
+    const size = item.sizes.find(s => s.key === detailState.size);
+    const sauce = item.sauces.find(s => s.key === detailState.sauce);
+    optionText = [size.label.split(' (')[0], detailState.salt ? 'คลุกเกลือ' : 'ไม่คลุกเกลือ', sauce.label.split(' (')[0]].join(' • ');
+    matchKey = `${detailState.itemId}-${detailState.size}-${detailState.salt}-${detailState.sauce}`;
+  } else {
+    const veggie = item.noVeggie ? null : detailState.veggie;
+    const parts = [detailState.utensils ? 'รับช้อนส้อม' : 'ไม่รับช้อนส้อม'];
+    if (veggie !== null) parts.push(veggie ? 'ใส่ผัก' : 'ไม่ใส่ผัก');
+    optionText = parts.join(' • ');
+    matchKey = `${detailState.itemId}-${detailState.utensils}-${veggie}`;
+  }
+
+  const existing = cartLines.find(l => l.matchKey === matchKey);
+  if (existing){
+    existing.qty += detailState.qty;
+  } else {
+    cartLines.push({
+      lineId: detailState.itemId + '-' + Date.now(),
+      id: detailState.itemId, name: item.name, unitPrice,
+      qty: detailState.qty, optionText, matchKey
+    });
+  }
+  const card = document.getElementById(`card-${detailState.itemId}`);
+  if (card){ card.classList.add('pulse'); setTimeout(() => card.classList.remove('pulse'), 300); }
+  closeItemDetail();
+  updateCartUI();
+  toast(`เพิ่ม "${item.name}" ลงตะกร้าแล้ว`);
+}
+
+function lineSubtotal(l){ return l.unitPrice * l.qty; }
+function cartTotal(){ return cartLines.reduce((sum, l) => sum + lineSubtotal(l), 0); }
+
+function updateCartUI(){
+  const count = cartLines.reduce((s,l)=>s+l.qty,0);
+  document.getElementById('cartCount').textContent = count;
+  if (document.getElementById('cartOverlay').classList.contains('show')) renderCartList();
+}
+
+function changeLineQty(lineId, delta){
+  const line = cartLines.find(l => l.lineId === lineId);
+  if (!line) return;
+  line.qty += delta;
+  if (line.qty <= 0) cartLines = cartLines.filter(l => l.lineId !== lineId);
+  updateCartUI();
+  renderCartList();
+}
+
+function openCart(){
+  renderCartList();
+  document.getElementById('cartOverlay').classList.add('show');
+}
+function closeCart(){
+  document.getElementById('cartOverlay').classList.remove('show');
+}
+function renderCartList(){
+  const listEl = document.getElementById('cartList');
+  if (cartLines.length === 0){
+    listEl.innerHTML = '<div class="empty-note">ยังไม่มีรายการในตะกร้า ลองเลือกเมนูแล้วกด + ดูสิ</div>';
+  } else {
+    listEl.innerHTML = cartLines.map(l => `
+      <div class="cart-row">
+        <div>
+          <div class="name">${l.name}</div>
+          <div class="sub">${l.optionText}</div>
+          <div class="cart-qty-stepper">
+            <button class="step-btn minus" onclick="changeLineQty('${l.lineId}', -1)">−</button>
+            <div class="qty-val">${l.qty}</div>
+            <button class="step-btn plus" onclick="changeLineQty('${l.lineId}', 1)">+</button>
+          </div>
+        </div>
+        <div class="amt display">฿${lineSubtotal(l)}</div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('cartTotalAmt').textContent = `฿${cartTotal()}`;
+  document.getElementById('checkoutBtn').disabled = cartLines.length === 0;
+}
+
+function goToPayment(){
+  const total = cartTotal();
+  if (total <= 0) return;
+  closeCart();
+  showQr(total);
+}
+
+function crc16ccitt(str){
+  let crc = 0xFFFF;
+  for (let c = 0; c < str.length; c++){
+    crc ^= str.charCodeAt(c) << 8;
+    for (let i = 0; i < 8; i++){
+      crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1);
+      crc &= 0xFFFF;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+function tlv(id, value){
+  return id + String(value.length).padStart(2, '0') + value;
+}
+function buildPromptPayPayload(target, amount){
+  let id = target.replace(/[^0-9]/g, '');
+  let subTag, subValue;
+  if (id.length >= 15){
+    subTag = '02'; subValue = id.padStart(13, '0');
+  } else if (id.length >= 13){
+    subTag = '03'; subValue = id.padStart(15, '0');
+  } else {
+    if (id.startsWith('0')) id = '66' + id.substring(1);
+    subTag = '01'; subValue = id.padStart(13, '0');
+  }
+  const merchantInfo = tlv('00', 'A000000677010111') + tlv(subTag, subValue);
+  let payload =
+    tlv('00', '01') +
+    tlv('01', '12') +
+    tlv('29', merchantInfo) +
+    tlv('53', '764') +
+    tlv('54', amount.toFixed(2)) +
+    tlv('58', 'TH');
+  payload += '6304';
+  return payload + crc16ccitt(payload);
+}
+
+function showQr(amount){
+  const payload = buildPromptPayPayload(PROMPTPAY_ID, amount);
+  document.getElementById('qrAmount').textContent = `฿${amount}`;
+  const orderId = 'ORD-' + Date.now().toString().slice(-6);
+  document.getElementById('qrOrderId').textContent = `เลขที่ออเดอร์: ${orderId}`;
+  const box = document.getElementById('qrCanvas');
+  box.innerHTML = '';
+  new QRCode(box, { text: payload, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+  document.getElementById('qrOverlay').classList.add('show');
+}
+function closeQr(){
+  document.getElementById('qrOverlay').classList.remove('show');
+  cartLines = [];
+  updateCartUI();
+  toast('ขอบคุณที่สั่งไก่แหกปากนะครับ 🍗');
+}
+
+let toastTimer = null;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+</script>
+
+</body>
+</html>
