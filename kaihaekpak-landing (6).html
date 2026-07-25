@@ -983,7 +983,7 @@ function buildPromptPayPayload(target, amount){
   return payload + crc16ccitt(payload);
 }
 
-const LINE_NOTIFY_URL = 'https://script.google.com/macros/s/AKfycby4isRmq-lv-sRiH1omYNVYR8oKiOeUDa3XHzUfysn_YKmseRDAyOhFJ3b_WG-lsZEr5A/exec';
+const LINE_NOTIFY_URL = 'https://script.google.com/macros/s/AKfycbxpZvUmIS3mYp0hrJcTfVkuHovDpB9WpVMIXSXLd0Ah2S8ngb6HjZlRI24SwRFNoTUmGg/exec';
 
 function notifyLineOrder(orderId, amount){
   const lines = cartLines.map(l => `• ${l.name} (${l.optionText}) x${l.qty}  ฿${lineSubtotal(l)}`).join('\n');
