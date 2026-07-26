@@ -475,6 +475,7 @@
     .app-shell{ box-shadow:none; }
   }
 </style>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
 
@@ -743,6 +744,21 @@ async function loadMenu(){
 }
 loadMenu();
 
+let customerUserId = null;
+let customerName = null;
+if (window.liff) {
+  liff.init({ liffId: '2010801918-LYfdt7FQ' })
+    .then(() => {
+      if (liff.isLoggedIn()) {
+        return liff.getProfile();
+      }
+    })
+    .then(profile => {
+      if (profile) { customerUserId = profile.userId; customerName = profile.displayName; }
+    })
+    .catch(err => console.warn('LIFF init ไม่สำเร็จ (เปิดนอกแอป LINE ก็เป็นเรื่องปกติ):', err));
+}
+
 let cartLines = []; // { lineId, id, name, unitPrice, qty, optionText, matchKey }
 let detailState = { itemId: null, qty: 1, utensils: true, veggie: true, size: null, salt: true, sauce: 'ketchup' };
 
@@ -987,17 +1003,29 @@ const LINE_NOTIFY_URL = 'https://script.google.com/macros/s/AKfycbxpZvUmIS3mYp0h
 
 function notifyLineOrder(orderId, amount){
   const lines = cartLines.map(l => `• ${l.name} (${l.optionText}) x${l.qty}  ฿${lineSubtotal(l)}`).join('\n');
-  const message =
+  const shopMessage =
     `🔔 ออเดอร์ใหม่เข้า!\n` +
+    `ลูกค้า: ${customerName || '(ไม่ทราบชื่อ — เปิดนอกแอป LINE)'}\n` +
     `เลขที่ออเดอร์: ${orderId}\n` +
     `${lines}\n` +
     `ยอดรวม: ฿${amount}`;
+
+  const customerMessage =
+    `✅ รับออเดอร์แล้วครับ!\n` +
+    `เลขที่ออเดอร์: ${orderId}\n` +
+    `${lines}\n` +
+    `ยอดรวม: ฿${amount}\n\n` +
+    `ร้านไก่แหกปากขอบคุณที่อุดหนุนนะครับ 🍗`;
 
   // ยิงแบบ no-cors: ไม่รอ/ไม่อ่านผลลัพธ์ ไม่ให้กระทบการแสดง QR ของลูกค้า
   fetch(LINE_NOTIFY_URL, {
     method: 'POST',
     mode: 'no-cors',
-    body: JSON.stringify({ message })
+    body: JSON.stringify({
+      message: shopMessage,
+      customerUserId: customerUserId,      // null ถ้าไม่ได้เปิดผ่าน LIFF ในแอป LINE
+      customerMessage: customerMessage
+    })
   }).catch(err => console.warn('LINE notify failed:', err));
 }
 
