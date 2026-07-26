@@ -1015,7 +1015,7 @@ function notifyLineOrder(orderId, amount){
     `เลขที่ออเดอร์: ${orderId}\n` +
     `${lines}\n` +
     `ยอดรวม: ฿${amount}\n\n` +
-    `หลังจากชำระเงินแล้วอย่าลืมแนบสลิป \n` +
+    `ชำระเงินเสร็จอย่าลืมแนบสลิป \n\n` +
     `ทางร้านไก่แหกปากขอบคุณที่อุดหนุนครับ 🍗`;
 
   // ยิงแบบ no-cors: ไม่รอ/ไม่อ่านผลลัพธ์ ไม่ให้กระทบการแสดง QR ของลูกค้า
@@ -1034,7 +1034,7 @@ function showQr(amount){
   // ใช้ QR พร้อมเพย์จริงของร้าน (รูปคงที่) แทนการสร้าง QR แบบไดนามิก
   // ลูกค้าต้องพิมพ์ยอดเงินเองในแอปธนาคารตามยอดที่แสดงด้านบน
   document.getElementById('qrAmount').textContent = `฿${amount}`;
-  const orderId = 'ORD-' + Date.now().toString().slice(-6);
+  const orderId = 'ORD-' + String(Date.now() % 1000).padStart(3, '0');
   document.getElementById('qrOrderId').textContent = `เลขที่ออเดอร์: ${orderId}`;
   document.getElementById('qrOverlay').classList.add('show');
   notifyLineOrder(orderId, amount);
