@@ -1039,8 +1039,8 @@ function showQr(amount){
   document.getElementById('qrOrderId').textContent = `เลขที่ออเดอร์: ${orderId}`;
   document.getElementById('qrOverlay').classList.add('show');
 
-  // นับถอยหลัง 7 วินาที ก่อนค่อยส่งแจ้งเตือนเข้า LINE (ให้เวลาลูกค้าสแกน/จ่ายเงินก่อน)
-  let secondsLeft = 7;
+  // นับถอยหลัง 12 วินาที ก่อนค่อยส่งแจ้งเตือนเข้า LINE (ให้เวลาลูกค้าสแกน/จ่ายเงินก่อน)
+  let secondsLeft = 12;
   const countdownEl = document.getElementById('qrCountdown');
   countdownEl.textContent = `กำลังส่งแจ้งเตือนร้านใน ${secondsLeft} วินาที...`;
   const countdownTimer = setInterval(() => {
