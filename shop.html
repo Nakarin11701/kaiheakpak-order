@@ -298,6 +298,7 @@ async function boot(){
 // ---------- data ----------
 async function loadOrders(){
   const { data, error } = await sb.from('orders').select('*')
+    .is('deleted_at', null)
     .or(`created_at.gte.${startOfTodayISO()},status.in.(pending_payment,paid,cooking,delivering)`)
     .order('created_at', { ascending: true });
   if (error){ toast('โหลดออเดอร์ไม่สำเร็จ'); return; }
@@ -319,7 +320,12 @@ function subscribe(){
       const row = payload.new;
       if (!row || !row.id) return;
       const i = orders.findIndex(o => o.id === row.id);
+      if (row.deleted_at){ if (i >= 0) orders.splice(i, 1); render(); return; }
+      const prev = i >= 0 ? orders[i] : null;
       if (i >= 0) orders[i] = row; else orders.push(row);
+      if (prev && prev.status !== 'cancelled' && row.status === 'cancelled' && row.cancelled_by === 'customer'){
+        beep(); toast(`ลูกค้ายกเลิกออเดอร์ ห้อง ${row.room} (${row.code})`);
+      }
       if (!knownIds.has(row.id)){
         knownIds.add(row.id); beep(); toast(`ออเดอร์ใหม่ ห้อง ${row.room} ${baht(row.total)}`);
       }
@@ -380,11 +386,14 @@ function renderQueue(counts){
     $('queueView').innerHTML = `<div class="empty">${currentTab === 'pending_payment' ? 'ยังไม่มีออเดอร์ใหม่ 🍗' : currentTab === 'cooking' ? 'ไม่มีออเดอร์ที่กำลังทำ' : 'ยังไม่มีออเดอร์ที่ส่งสำเร็จวันนี้'}</div>`;
     return;
   }
-  $('queueView').innerHTML = list.map(orderCard).join('');
+  const cancelled = list.filter(o => o.status === 'cancelled');
+  $('queueView').innerHTML = (currentTab === 'done' && cancelled.length
+      ? `<button class="btn btn-ghost" style="width:100%;margin-bottom:10px;color:var(--red-ink)" data-del-cancelled>🗑 ลบออเดอร์ที่ยกเลิกทั้งหมด (${cancelled.length})</button>` : '')
+    + list.map(orderCard).join('');
 }
 
 function payPill(o){
-  if (o.status === 'cancelled') return `<span class="pill cancel">ยกเลิก</span>`;
+  if (o.status === 'cancelled') return `<span class="pill cancel">${o.cancelled_by === 'customer' ? 'ลูกค้ายกเลิก' : 'ร้านยกเลิก'}</span>`;
   if (o.status === 'pending_payment') return `<span class="pill wait">รอเงิน ${baht(o.total)}</span>`;
   return `<span class="pill paid">จ่ายแล้ว ${baht(o.total)}</span>`;
 }
@@ -441,6 +450,7 @@ function openDetail(id){
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
       ${s && s.next ? `<button class="btn ${s.btn}" style="min-height:56px" data-set="${o.id}" data-status="${s.next}">${s.action}</button>` : ''}
       ${!['done','cancelled'].includes(o.status) ? `<button class="btn btn-ghost" style="color:var(--red-ink)" data-set="${o.id}" data-status="cancelled">ยกเลิกออเดอร์</button>` : ''}
+      <button class="btn btn-ghost" style="color:var(--muted);font-weight:600" data-del-order="${o.id}">🗑 ลบออเดอร์นี้</button>
     </div>`;
   $('detailOverlay').classList.add('show');
 }
@@ -783,6 +793,39 @@ document.addEventListener('click', async ev => {
   if (t.dataset.editPromo) return openPromoEditor(t.dataset.editPromo);
   if (t.hasAttribute('data-save-promo')) return savePromo(t);
   if (t.hasAttribute('data-del-promo')) return deletePromo();
+});
+
+// ---------- ลบออเดอร์ (ซ่อนถาวรจากทุกหน้า ข้อมูลยังสำรองไว้ในฐานข้อมูล) ----------
+async function deleteOrders(ids){
+  const now = new Date().toISOString();
+  for (const id of ids){
+    const o = orders.find(x => x.id === id); if (!o) continue;
+    const patch = { deleted_at: now };
+    if (!['done', 'cancelled'].includes(o.status)) patch.status = 'cancelled';   // ออเดอร์ที่ยังไม่จบ → ลูกค้าจะเห็นว่าถูกยกเลิก
+    const { error } = await sb.from('orders').update(patch).eq('id', id);
+    if (error){ toast('ลบไม่สำเร็จ ลองใหม่อีกครั้ง'); return false; }
+  }
+  orders = orders.filter(o => !ids.includes(o.id));
+  $('detailOverlay').classList.remove('show');
+  render(); toast(ids.length > 1 ? `ลบแล้ว ${ids.length} ออเดอร์` : 'ลบออเดอร์แล้ว');
+  return true;
+}
+document.addEventListener('click', async ev => {
+  const t = ev.target.closest('button'); if (!t) return;
+  if (t.dataset.delOrder){
+    const o = orders.find(x => x.id === t.dataset.delOrder); if (!o) return;
+    const active = !['done', 'cancelled'].includes(o.status);
+    const msg = `ลบออเดอร์ ${o.code} ห้อง ${o.room} (${baht(o.total)}) ?\n\n` +
+      (active ? '⚠️ ออเดอร์นี้ยังไม่จบ ลบแล้วลูกค้าจะเห็นว่า “ถูกยกเลิก”\nถ้าลูกค้าโอนแล้ว อย่าลืมคืนเงิน\n\n' : '') +
+      'ออเดอร์จะหายจากหลังร้าน ยอดขาย และประวัติลูกค้า (ถ้าเข้าระบบจัดการแล้ว จะถูกลบออกจากระบบจัดการด้วย)';
+    if (!confirm(msg)) return;
+    t.disabled = true; await deleteOrders([o.id]); t.disabled = false; return;
+  }
+  if (t.hasAttribute('data-del-cancelled')){
+    const ids = orders.filter(o => o.status === 'cancelled').map(o => o.id);
+    if (!ids.length || !confirm(`ลบออเดอร์ที่ยกเลิกทั้งหมด ${ids.length} รายการ?`)) return;
+    t.disabled = true; await deleteOrders(ids); t.disabled = false;
+  }
 });
 
 // ---------- events ----------
