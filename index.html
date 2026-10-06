@@ -308,7 +308,7 @@
 // ======================= ตั้งค่าร้าน =======================
 // เบอร์พร้อมเพย์ (10 หลัก) หรือเลขบัตรประชาชน/ผู้เสียภาษี (13 หลัก) ของร้าน
 // ใส่แล้ว QR จะใส่ยอดเงินให้อัตโนมัติ  |  ถ้าเว้นว่าง จะใช้รูป QR เดิมของร้าน (ลูกค้าพิมพ์ยอดเอง)
-const PROMPTPAY_ID = "";
+const PROMPTPAY_ID = "0642488406";
 const PROMPTPAY_NAME = ""; // ชื่อบัญชีที่ลูกค้าจะเห็น เช่น "นาย ก. ไก่แหกปาก" (ไม่ใส่ก็ได้)
 const LIFF_ID = "2010801918-LYfdt7FQ";
 const SUPABASE_URL = "https://iyrgolgqkfronjjbmkhk.supabase.co";
@@ -407,7 +407,7 @@ async function loadMenu(){
       if (error || !rows || !rows.length) throw error || new Error('empty');
       MENU = rows.map(normalizeItem);
       shopOpen = st ? st.is_open : true;
-    } catch (e){ console.warn('ใช้เมนูสำรอง', e); MENU = FALLBACK_MENU; }
+    } catch (e){ console.warn('ใช้เมนูสำรอง (ต่อฐานข้อมูลไม่ได้):', (e && (e.message || e.code)) || e); MENU = FALLBACK_MENU; }
   } else MENU = FALLBACK_MENU;
   renderMenu();
 }
