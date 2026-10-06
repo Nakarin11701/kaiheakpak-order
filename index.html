@@ -182,8 +182,144 @@
   .tstep .lbl{ padding-top:2px; font-size:14.5px; color:var(--muted); }
   .tstep .lbl.on{ color:var(--ink); font-weight:700; }
 
+  /* ---------- history ---------- */
+  .hist-btn{ display:flex; align-items:center; gap:6px; min-height:36px; padding:0 12px; border-radius:999px; border:none; background:rgba(255,255,255,.16); color:#fff; font-size:12.5px; font-weight:700; white-space:nowrap; }
+  .hero-right{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+  .hist-list{ padding:6px 16px 0; display:flex; flex-direction:column; gap:10px; }
+  .hcard{ width:100%; text-align:left; background:#fff; border:none; border-radius:18px; padding:14px; box-shadow:0 2px 0 var(--line-2); }
+  .hcard .top{ display:flex; align-items:center; gap:8px; }
+  .hcard .code{ font-family:'Kanit',sans-serif; font-weight:700; font-size:15px; }
+  .hcard .when{ margin-left:auto; font-size:12.5px; color:var(--muted); }
+  .hcard .items{ font-size:13.5px; margin-top:8px; line-height:1.45; }
+  .hcard .foot{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+  .hcard .tot{ font-family:'Kanit',sans-serif; font-weight:800; font-size:17px; color:var(--red-ink); }
+  .hcard .go{ font-size:13px; font-weight:700; color:var(--red-ink); }
+  .pill{ font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+  .pill.wait{ background:var(--amber-bg); color:var(--amber-ink); }
+  .pill.cook{ background:#FFF0C2; color:#6B4A00; }
+  .pill.done{ background:var(--green-bg); color:var(--green-ink); }
+  .pill.cancel{ background:#EEE6DA; color:var(--muted); }
+
   .toast{ position:fixed; left:50%; bottom:100px; transform:translate(-50%,20px); background:var(--ink); color:#fff; padding:12px 20px; border-radius:999px; font-size:14px; font-weight:600; opacity:0; pointer-events:none; transition:all .25s; z-index:100; max-width:90%; text-align:center; }
   .toast.on{ opacity:1; transform:translate(-50%,0); }
+
+  /* =====================================================================
+     LIQUID GLASS — วัสดุกระจกโปร่งแสง ไฮไลต์ขอบ เงาซ้อนชั้น
+     ===================================================================== */
+  :root{
+    --glass-bg: rgba(255,255,255,.58);
+    --glass-bg-strong: rgba(255,255,255,.78);
+    --glass-edge: rgba(255,255,255,.85);
+    --glass-blur: saturate(180%) blur(22px);
+    --glass-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 -1px 0 rgba(120,60,20,.06) inset, 0 10px 30px -10px rgba(90,30,10,.25), 0 2px 6px rgba(90,30,10,.06);
+  }
+  body{ background:var(--ground); }
+  body::before{ content:""; position:fixed; inset:-10vh -10vw; z-index:-1; pointer-events:none;
+    background:
+      radial-gradient(38vmax 38vmax at 8% 18%, rgba(255,197,49,.38), transparent 60%),
+      radial-gradient(34vmax 34vmax at 96% 42%, rgba(211,33,22,.20), transparent 60%),
+      radial-gradient(40vmax 40vmax at 30% 88%, rgba(255,140,60,.22), transparent 62%),
+      linear-gradient(180deg, #FFF8EA, #FFF3E2); }
+  .glass, .dish, .search, .cat, .room-btn, .panel, .cline, .hcard, .track, .qr-card, .status, .btn-soft{
+    background:var(--glass-bg); -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+    border:1px solid var(--glass-edge); box-shadow:var(--glass-shadow); }
+  .views-pad{ padding-bottom:180px; }
+  .view{ padding-bottom:180px; }
+
+  /* hero: แดงเงา มีประกายด้านบน */
+  .hero{ position:relative; overflow:hidden; border-radius:0 0 32px 32px;
+    background:linear-gradient(160deg, #E8382A 0%, #D32116 45%, #A9170D 100%);
+    box-shadow:0 18px 40px -18px rgba(169,23,13,.6); }
+  .hero::before{ content:""; position:absolute; inset:0 0 auto 0; height:60%; pointer-events:none;
+    background:linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0)); }
+  .hero::after{ content:""; position:absolute; width:220px; height:220px; right:-60px; top:-90px; border-radius:50%; pointer-events:none;
+    background:radial-gradient(circle, rgba(255,197,49,.45), transparent 65%); }
+  .hero > *{ position:relative; z-index:1; }
+  .open-chip{ background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35);
+    -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); box-shadow:0 1px 0 rgba(255,255,255,.4) inset; }
+  .room-btn{ background:rgba(255,255,255,.92); }
+  .promo img{ box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 18px 36px -14px rgba(80,20,10,.45); border:1px solid rgba(255,255,255,.7); }
+  .search{ border-radius:16px; }
+  .cat{ border-radius:999px; }
+  .cat.on{ background:linear-gradient(180deg, #3A2A22, #1F1410); color:#fff; border-color:rgba(255,255,255,.25);
+    box-shadow:0 1px 0 rgba(255,255,255,.25) inset, 0 8px 18px -8px rgba(31,20,16,.6); }
+
+  /* การ์ดเมนูแบบกระจก */
+  .dish{ border-radius:22px; transition:transform .15s ease, box-shadow .2s ease; }
+  .dish:active{ transform:scale(.98); }
+  .dish img{ border-radius:16px; box-shadow:0 6px 14px -6px rgba(80,20,10,.45); }
+  .dish .plus{ border-radius:16px; color:#3A2600;
+    background:linear-gradient(180deg, #FFD966 0%, #FFC531 55%, #F2A900 100%);
+    box-shadow:0 1px 0 rgba(255,255,255,.75) inset, 0 -2px 0 rgba(150,90,0,.18) inset, 0 6px 14px -6px rgba(200,130,0,.7); }
+  .dish.out .plus{ background:rgba(230,220,203,.8); box-shadow:none; color:var(--muted); }
+
+  /* ปุ่มหลักแดงแบบเจล */
+  .btn-main, .glass-red{
+    background:linear-gradient(180deg, #EE4434 0%, #D32116 55%, #B81A10 100%) !important;
+    box-shadow:0 1px 0 rgba(255,255,255,.45) inset, 0 -2px 0 rgba(90,0,0,.2) inset, 0 14px 28px -12px rgba(211,33,22,.75) !important;
+    border:1px solid rgba(255,255,255,.18) !important; }
+  .btn-line{ background:linear-gradient(180deg, #2BDB76, #06C755 60%, #05AE4A); box-shadow:0 1px 0 rgba(255,255,255,.5) inset, 0 12px 24px -12px rgba(6,160,70,.7); }
+  .btn-soft{ border-radius:16px; }
+
+  /* แคปซูลตะกร้าลอย (อยู่เหนือแถบล่าง) */
+  .cartbar{ bottom:calc(84px + env(safe-area-inset-bottom)); background:none; padding:0 16px 10px; }
+  .cartbar button{ border-radius:22px; min-height:56px; }
+  .cartbar .count{ background:rgba(255,255,255,.95); color:var(--red-ink); box-shadow:0 1px 2px rgba(0,0,0,.15); }
+
+  /* แถบเมนูด้านล่างแบบกระจกลอย */
+  .tabbar{ position:fixed; left:0; right:0; bottom:0; z-index:30; display:flex; justify-content:center;
+    padding:0 16px calc(12px + env(safe-area-inset-bottom)); pointer-events:none; }
+  .tabbar .tabs{ pointer-events:auto; position:relative; width:100%; max-width:420px; height:66px; border-radius:33px;
+    display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); padding:5px; background:rgba(255,255,255,.55); }
+  .tab-glow{ position:absolute; top:5px; bottom:5px; left:5px; width:calc((100% - 10px) / 3); border-radius:28px;
+    background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.6));
+    box-shadow:0 1px 0 #fff inset, 0 6px 16px -6px rgba(90,30,10,.35), 0 0 0 1px rgba(211,33,22,.08);
+    transition:transform .35s cubic-bezier(.3,1.4,.5,1); }
+  .tab{ position:relative; z-index:1; border:none; background:transparent; border-radius:28px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    font-size:11.5px; font-weight:700; color:#7A6656; transition:color .2s; }
+  .tab.on{ color:var(--red-ink); }
+  .tab .ic{ position:relative; display:flex; }
+  .badge{ position:absolute; top:-5px; right:-10px; min-width:18px; height:18px; padding:0 5px; border-radius:999px;
+    background:linear-gradient(180deg, #EE4434, #C81E14); color:#fff; font-size:11px; font-weight:800; font-style:normal;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px rgba(255,255,255,.9); }
+  .live-dot{ position:absolute; top:-2px; right:-4px; width:10px; height:10px; border-radius:50%; background:#22B35A;
+    box-shadow:0 0 0 2px #fff; animation:pulse 1.6s ease-out infinite; }
+  @keyframes pulse{ 0%{ box-shadow:0 0 0 2px #fff, 0 0 0 2px rgba(34,179,90,.6);} 100%{ box-shadow:0 0 0 2px #fff, 0 0 0 10px rgba(34,179,90,0);} }
+
+  /* แผ่นด้านล่าง / หน้าเลือก */
+  .paybar .in, .sticky-foot .in{ background:rgba(255,255,255,.72); -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+    border-top:1px solid var(--glass-edge); box-shadow:0 -10px 30px -16px rgba(90,30,10,.3); }
+  .overlay{ -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); background:rgba(40,15,8,.35); }
+  .item-sheet{ background:transparent; }
+  .item-body{ background:rgba(255,251,242,.86); -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+    box-shadow:0 -1px 0 rgba(255,255,255,.9) inset; min-height:calc(100vh - 274px); }
+  .round-btn{ background:rgba(255,255,255,.7); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.9); }
+  .opt{ background:rgba(255,255,255,.65); border:1px solid var(--glass-edge); box-shadow:var(--glass-shadow); }
+  .opt.on{ background:linear-gradient(180deg, rgba(255,241,238,.95), rgba(255,226,220,.9)); border:1.5px solid var(--red); }
+  .stepper, .mini-step{ background:rgba(255,255,255,.6); border:1px solid var(--glass-edge); box-shadow:var(--glass-shadow); }
+  .field input,.field textarea{ background:rgba(255,255,255,.7); border:1px solid rgba(230,215,195,.9); box-shadow:0 1px 2px rgba(90,30,10,.06) inset; }
+  .room-sheet{ background:rgba(255,251,242,.9); -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur); }
+  .topbar{ position:sticky; top:0; z-index:5; background:rgba(255,248,234,.6); -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur); }
+  .pay-hero{ border-radius:0 0 32px 32px; background:linear-gradient(160deg, #E8382A, #D32116 45%, #A9170D); position:relative; overflow:hidden; }
+  .pay-hero::before{ content:""; position:absolute; inset:0 0 auto 0; height:55%; background:linear-gradient(180deg, rgba(255,255,255,.2), transparent); pointer-events:none; }
+  .pay-hero > *{ position:relative; }
+  .qr-card{ background:var(--glass-bg-strong); }
+  .qr-box{ background:#fff; border:1px solid rgba(230,215,195,.9); }
+  .status.wait{ background:rgba(255,246,219,.75); }
+  .status.ok{ background:rgba(221,243,228,.8); }
+  .done-icon{ background:linear-gradient(180deg, #2FB560, #1E8C45); box-shadow:0 1px 0 rgba(255,255,255,.5) inset, 0 0 0 12px rgba(221,243,228,.8), 0 18px 34px -12px rgba(30,140,69,.6); }
+
+  /* เครื่อง/ผู้ใช้ที่ไม่รองรับหรือปิดความโปร่งใส → ใช้พื้นทึบ อ่านง่าย */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+    .glass, .dish, .search, .cat, .room-btn, .panel, .cline, .hcard, .track, .qr-card, .status, .btn-soft, .tabbar .tabs, .paybar .in, .sticky-foot .in, .topbar, .item-body{ background:#fff; }
+  }
+  @media (prefers-reduced-transparency: reduce){
+    .glass, .dish, .search, .cat, .room-btn, .panel, .cline, .hcard, .track, .qr-card, .btn-soft, .tabbar .tabs, .paybar .in, .sticky-foot .in, .topbar, .item-body{ background:#fff; -webkit-backdrop-filter:none; backdrop-filter:none; }
+  }
+  .toast{ top:calc(14px + env(safe-area-inset-top)); bottom:auto; transform:translate(-50%,-20px); }
+  .toast.on{ transform:translate(-50%,0); }
+  @media (prefers-reduced-motion: reduce){ .tab-glow, .dish{ transition:none; } .live-dot{ animation:none; } }
 </style>
 </head>
 <body>
@@ -212,9 +348,7 @@
     <div class="cats" id="cats"></div>
   </div>
   <div class="list" id="menuList"><div class="empty">กำลังโหลดเมนู…</div></div>
-  <div class="cartbar hidden" id="cartbar"><div class="in">
-    <button id="openCartBtn"><span class="count" id="cartCount">0</span><span class="label">ดูตะกร้า</span><span class="sum" id="cartSum">฿0</span></button>
-  </div></div>
+
 </section>
 
 <!-- ================= 3 · CART ================= -->
@@ -238,6 +372,14 @@
     <div class="tot"><span class="k" style="font-weight:600;font-size:16px">ยอดรวม</span><b id="cartTotal">฿0</b></div>
     <button class="btn-main center" id="placeBtn">สั่งเลย · จ่ายด้วยพร้อมเพย์</button>
   </div></div>
+</section>
+
+<!-- ================= HISTORY ================= -->
+<section class="view" id="vHistory">
+  <div class="topbar" style="padding:18px 20px 10px">
+    <h1>ออเดอร์ของฉัน</h1>
+  </div>
+  <div class="hist-list" id="histList"></div>
 </section>
 
 <!-- ================= 4 · PAY ================= -->
@@ -283,6 +425,17 @@
 </section>
 
 </div>
+
+<!-- ================= floating cart pill + bottom tab bar ================= -->
+<div class="cartbar hidden" id="cartbar"><div class="in">
+  <button id="openCartBtn" class="glass-red"><span class="count" id="cartCount">0</span><span class="label">ดูตะกร้า</span><span class="sum" id="cartSum">฿0</span></button>
+</div></div>
+<nav class="tabbar" id="tabbar" aria-label="เมนูหลัก"><div class="tabs glass">
+  <span class="tab-glow" id="tabGlow" aria-hidden="true"></span>
+  <button class="tab on" data-tab="vMenu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg><span>เมนู</span></button>
+  <button class="tab" data-tab="vCart"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 11.1a2 2 0 0 1-2 1.9H8.2a2 2 0 0 1-2-1.9z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><b class="badge hidden" id="tabCartBadge">0</b></span><span>ตะกร้า</span></button>
+  <button class="tab" data-tab="vHistory"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg><i class="live-dot hidden" id="tabLiveDot"></i></span><span>ออเดอร์ของฉัน</span></button>
+</div></nav>
 
 <!-- ================= 2 · ITEM ================= -->
 <div class="overlay" id="itemOverlay"><div class="item-sheet" id="itemSheet"></div></div>
@@ -349,9 +502,18 @@ const baht = n => '฿' + Number(n || 0).toLocaleString('th-TH');
 let toastT;
 function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2600); }
 function store(key, val){ try { if (val === undefined) return JSON.parse(localStorage.getItem(key) || 'null'); localStorage.setItem(key, JSON.stringify(val)); } catch (e){ return null; } }
+const TAB_VIEWS = ['vMenu', 'vHistory'];
 function go(view){
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === view));
   window.scrollTo(0, 0);
+  const showTabs = TAB_VIEWS.includes(view);
+  $('tabbar').classList.toggle('hidden', !showTabs);
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const on = t.dataset.tab === view; t.classList.toggle('on', on);
+    if (on) $('tabGlow').style.transform = `translateX(${i * 100}%)`;
+  });
+  renderCartBar();
+  if (view === 'vHistory') loadHistory();
   if (view === 'vMenu') renderMenu();
   if (view === 'vCart') renderCart();
 }
@@ -444,7 +606,9 @@ function renderMenu(){
 }
 function renderCartBar(){
   const n = cart.reduce((s, l) => s + l.qty, 0);
-  $('cartbar').classList.toggle('hidden', n === 0);
+  $('cartbar').classList.toggle('hidden', n === 0 || !$('vMenu').classList.contains('on'));
+  $('tabCartBadge').textContent = n; $('tabCartBadge').classList.toggle('hidden', n === 0);
+  $('tabLiveDot').classList.toggle('hidden', !(order && !['done','cancelled'].includes(order.status)));
   $('cartCount').textContent = n;
   $('cartSum').textContent = baht(cartTotal());
 }
@@ -585,6 +749,8 @@ async function placeOrder(){
 
   order = { code, token, total, room: c.room, status: 'pending_payment', sent, at: Date.now(), msg: lastMessage };
   store('khp_order', order);
+  const refs = (store('khp_orders') || []).filter(r => r.code !== code);
+  if (token) refs.unshift({ code, token }); store('khp_orders', refs.slice(0, 50));
   cart = []; $('coNote').value = '';
   btn.disabled = false; btn.textContent = 'สั่งเลย · จ่ายด้วยพร้อมเพย์';
   showPay(); startPolling();
@@ -670,12 +836,74 @@ function startPolling(){ stopPolling(); if (sb && order && order.token) pollTime
 function stopPolling(){ if (pollTimer){ clearInterval(pollTimer); pollTimer = null; } }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && order && !['done','cancelled'].includes(order.status)){ checkStatus(); startPolling(); } });
 
+// ---------- history ----------
+const STATUS_UI = {
+  pending_payment: ['wait', 'รอยืนยันยอดเงิน'], paid: ['cook', 'กำลังทำ'], cooking: ['cook', 'กำลังทำ'],
+  delivering: ['cook', 'กำลังทำ'], done: ['done', 'ส่งแล้ว'], cancelled: ['cancel', 'ยกเลิก'],
+};
+let orderHistory = [];
+function whenText(ts){
+  const d = new Date(ts), now = new Date();
+  const time = d.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
+  if (d.toDateString() === now.toDateString()) return 'วันนี้ ' + time;
+  const y = new Date(now); y.setDate(now.getDate() - 1);
+  if (d.toDateString() === y.toDateString()) return 'เมื่อวาน ' + time;
+  return d.toLocaleDateString('th-TH', { day:'numeric', month:'short' }) + ' ' + time;
+}
+async function loadHistory(){
+  $('histList').innerHTML = '<div class="empty">กำลังโหลด…</div>';
+  const byCode = {};
+  if (sb){
+    // 1) บัญชี LINE (ดูได้ทุกเครื่อง) — ยืนยันตัวตนกับ LINE ที่ server
+    try {
+      const idToken = liffReady && liff.isLoggedIn() && liff.getIDToken && liff.getIDToken();
+      if (idToken){
+        const { data } = await sb.functions.invoke('my-orders', { body: { idToken } });
+        (data && data.orders || []).forEach(o => byCode[o.code] = o);
+      }
+    } catch (e){ console.warn('my-orders', e); }
+    // 2) ออเดอร์ที่สั่งจากเครื่องนี้
+    const refs = store('khp_orders') || [];
+    if (refs.length){
+      const { data } = await sb.rpc('get_orders_by_refs', { p_refs: refs });
+      (data || []).forEach(o => byCode[o.code] = o);
+    }
+  }
+  orderHistory = Object.values(byCode).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  renderHistory();
+}
+function renderHistory(){
+  if (!orderHistory.length){
+    $('histList').innerHTML = `<div class="empty">ยังไม่มีประวัติการสั่ง<br><button class="btn-soft" style="margin-top:14px;width:auto;padding:0 20px" data-go="vMenu">เลือกเมนู</button></div>`;
+    return;
+  }
+  $('histList').innerHTML = orderHistory.map((o, i) => {
+    const [cls, label] = STATUS_UI[o.status] || ['cancel', o.status];
+    const items = (o.items || []).map(it => `${it.qty}× ${esc(it.name)}`).join(', ');
+    return `<button class="hcard" data-hist="${i}">
+      <div class="top"><span class="code">${esc(o.code)}</span><span class="pill ${cls}">${label}</span><span class="when">${whenText(o.created_at)}</span></div>
+      <div class="items">${items}</div>
+      <div class="foot"><span class="tot">${baht(o.total)}</span><span class="go">${o.status === 'pending_payment' ? 'จ่ายเงิน ›' : 'ห้อง ' + esc(o.room) + ' ›'}</span></div>
+    </button>`;
+  }).join('');
+}
+function openHistory(i){
+  const o = orderHistory[i]; if (!o) return;
+  const status = (o.status === 'paid' || o.status === 'delivering') ? 'cooking' : o.status;
+  order = { code: o.code, token: o.token, total: o.total, room: o.room, status, sent: true, at: new Date(o.created_at).getTime(),
+            msg: (order && order.code === o.code && order.msg) || '' };
+  if (status === 'pending_payment' || status === 'cancelled') showPay(); else showPaid();
+  if (!['done','cancelled'].includes(status)){ store('khp_order', order); startPolling(); }
+}
+
 // ---------- events ----------
 document.addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t) return;
   if (t.dataset.go){ go(t.dataset.go); return; }
+  if (t.dataset.tab){ go(t.dataset.tab); return; }
   if (t.dataset.cat){ cat = t.dataset.cat; query = ''; $('search').value = ''; renderMenu(); return; }
   if (t.dataset.item){ openItem(t.dataset.item); return; }
+  if (t.dataset.hist){ openHistory(+t.dataset.hist); return; }
   if (t.dataset.opt){ detail.opts[t.dataset.opt] = JSON.parse(t.dataset.val); renderItem(); return; }
   if (t.dataset.line){
     const l = cart[+t.dataset.line]; l.qty += +t.dataset.d;
@@ -688,6 +916,7 @@ $('qMinus').onclick = () => { if (detail.qty > 1){ detail.qty--; renderItem(); }
 $('qPlus').onclick = () => { if (detail.qty < 20){ detail.qty++; renderItem(); } };
 $('addBtn').onclick = addToCart;
 $('openCartBtn').onclick = () => go('vCart');
+
 $('placeBtn').onclick = placeOrder;
 $('toChatBtn').onclick = backToChat;
 $('backChatBtn').onclick = backToChat;
@@ -701,6 +930,7 @@ $('roomInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('room
 (function start(){
   updateRoomBtn();
   const saved = store('khp_order');
+  if (saved && saved.token){ const refs = store('khp_orders') || []; if (!refs.some(r => r.code === saved.code)){ refs.unshift({ code: saved.code, token: saved.token }); store('khp_orders', refs.slice(0, 50)); } }
   if (saved && saved.token && Date.now() - saved.at < 6 * 3600e3 && !['done','cancelled'].includes(saved.status)){ order = saved; checkStatus(); startPolling(); }
   loadMenu();
   initLiff();
