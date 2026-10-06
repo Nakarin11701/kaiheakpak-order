@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>หลังร้าน · ไก่แหกปาก</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#1F1410; --ground:#F4EFE6; --card:#FFFFFF; --line:#E6DCCB;
+    --red:#D32116; --red-ink:#C81E14; --yellow:#FFC531; --muted:#6B5B50;
+    --green:#1E8C45; --green-ink:#17703A; --green-bg:#DDF3E4; --amber-bg:#FFF6DB; --amber-ink:#6B4A00;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ background:var(--ground); }
+  body{ font-family:'Sarabun',sans-serif; color:var(--ink); -webkit-font-smoothing:antialiased; min-height:100vh; }
+  .k{ font-family:'Kanit',sans-serif; }
+  button,input{ font-family:inherit; font-size:inherit; color:inherit; }
+  button{ cursor:pointer; }
+  .wrap{ max-width:560px; margin:0 auto; }
+
+  /* login */
+  .login{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px 16px; background:var(--ink); }
+  .login-card{ width:100%; max-width:380px; background:var(--card); border-radius:24px; padding:28px 22px; }
+  .login-card h1{ font-family:'Kanit',sans-serif; font-weight:800; font-size:26px; }
+  .login-card p{ color:var(--muted); font-size:14px; margin-top:4px; }
+  .field{ display:block; margin-top:16px; }
+  .field span{ display:block; font-weight:600; font-size:13.5px; margin-bottom:6px; }
+  .field input{ width:100%; min-height:48px; border:1.5px solid var(--line); border-radius:12px; padding:0 14px; font-size:16px; background:#FFFBF2; outline:none; }
+  .field input:focus{ border-color:var(--yellow); }
+  .btn{ min-height:48px; border:none; border-radius:14px; padding:0 18px; font-family:'Kanit',sans-serif; font-weight:600; font-size:16px; }
+  .btn-red{ background:var(--red); color:#fff; }
+  .btn-ghost{ background:transparent; border:1.5px solid var(--line); color:var(--ink); font-family:'Sarabun',sans-serif; font-weight:700; font-size:14px; }
+  .btn:disabled{ opacity:.5; }
+  .err{ margin-top:12px; color:var(--red-ink); font-size:14px; font-weight:600; min-height:20px; }
+
+  /* header */
+  header{ background:var(--ink); color:#fff; padding:14px 16px 12px; position:sticky; top:0; z-index:10; }
+  .h-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .eyebrow{ font-size:12px; font-weight:700; letter-spacing:1px; color:var(--yellow); }
+  .h-title{ font-family:'Kanit',sans-serif; font-weight:700; font-size:22px; line-height:1.2; }
+  .open-toggle{ display:flex; align-items:center; gap:10px; min-height:44px; padding:0 8px 0 14px; border-radius:999px; background:rgba(255,255,255,.1); font-size:13.5px; font-weight:700; border:none; color:#fff; }
+  .sw{ width:44px; height:26px; border-radius:999px; background:#6b5b50; position:relative; transition:background .2s; flex-shrink:0; }
+  .sw::after{ content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:transform .2s; }
+  .sw.on{ background:#2BB45F; } .sw.on::after{ transform:translateX(18px); }
+  .tabs{ display:flex; gap:8px; margin-top:12px; overflow-x:auto; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab{ min-height:40px; padding:0 14px; border-radius:12px; border:none; background:rgba(255,255,255,.12); color:#fff; font-family:'Kanit',sans-serif; font-weight:500; font-size:14px; white-space:nowrap; }
+  .tab.on{ background:var(--yellow); color:var(--ink); font-weight:700; }
+
+  main{ padding:12px 12px 110px; }
+  .empty{ text-align:center; color:var(--muted); padding:48px 16px; font-size:15px; }
+
+  /* order card */
+  .order{ background:var(--card); border-radius:18px; padding:14px; box-shadow:0 1px 0 var(--line); margin-bottom:10px; }
+  .o-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .room{ font-family:'Kanit',sans-serif; font-weight:800; font-size:22px; line-height:1; }
+  .pill{ font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; }
+  .pill.paid{ color:var(--green-ink); background:var(--green-bg); }
+  .pill.wait{ color:var(--amber-ink); background:var(--amber-bg); }
+  .pill.cancel{ color:#fff; background:#8A7868; }
+  .age{ margin-left:auto; font-size:12.5px; font-weight:700; color:var(--muted); }
+  .age.late{ color:var(--red-ink); }
+  .o-meta{ font-size:12px; color:var(--muted); margin-top:4px; }
+  .o-items{ margin-top:10px; display:flex; flex-direction:column; gap:4px; }
+  .o-line{ display:flex; gap:8px; font-size:14.5px; line-height:1.35; }
+  .o-line b.q{ font-family:'Kanit',sans-serif; min-width:26px; }
+  .o-line .opt{ color:var(--muted); font-size:13px; }
+  .o-note{ margin-top:8px; font-size:13px; background:var(--amber-bg); color:var(--amber-ink); border-radius:10px; padding:7px 10px; }
+  .o-actions{ display:flex; gap:8px; margin-top:12px; }
+  .o-actions .btn-red{ flex:1; }
+  .o-actions .btn-green{ flex:1; background:var(--green); color:#fff; }
+
+  /* detail sheet */
+  .overlay{ position:fixed; inset:0; background:rgba(20,10,5,.5); z-index:50; display:none; align-items:flex-end; justify-content:center; }
+  .overlay.show{ display:flex; }
+  .sheet{ background:var(--ground); width:100%; max-width:560px; border-radius:24px 24px 0 0; max-height:90vh; overflow-y:auto; padding:18px 14px 28px; }
+  .box{ background:var(--card); border-radius:18px; padding:14px 16px; margin-top:10px; }
+  .box h3{ font-family:'Kanit',sans-serif; font-weight:600; font-size:15px; color:var(--muted); margin-bottom:8px; }
+  .row{ display:flex; justify-content:space-between; gap:12px; font-size:14.5px; padding:3px 0; }
+  .steps{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+  .step .bar{ height:6px; border-radius:999px; background:var(--line); }
+  .step.done .bar{ background:var(--green); }
+  .step div:last-child{ font-size:12px; text-align:center; margin-top:6px; color:var(--muted); }
+  .step.done div:last-child{ color:var(--green-ink); font-weight:700; }
+  .icon-btn{ min-width:44px; min-height:44px; border-radius:12px; border:1.5px solid var(--line); background:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; color:var(--ink); font-weight:700; font-size:14px; padding:0 12px; gap:6px; }
+
+  /* menu */
+  .m-item{ display:flex; align-items:center; gap:12px; background:var(--card); border-radius:16px; padding:8px 12px 8px 8px; margin-bottom:8px; min-height:64px; }
+  .m-item img,.m-item .ph{ width:52px; height:52px; border-radius:12px; object-fit:cover; flex-shrink:0; background:#F4EFE6; }
+  .m-item.off img{ opacity:.4; filter:grayscale(1); }
+  .m-name{ font-weight:700; font-size:15px; }
+  .m-sub{ font-size:13px; color:var(--muted); margin-top:2px; display:flex; align-items:center; gap:6px; }
+  .price-in{ width:72px; min-height:36px; border:1.5px solid var(--line); border-radius:10px; padding:0 8px; font-size:15px; background:#FFFBF2; }
+  .sw-btn{ border:none; background:transparent; min-width:52px; min-height:44px; display:flex; align-items:center; justify-content:center; margin-left:auto; }
+
+  /* sales */
+  .big{ background:var(--ink); color:#fff; border-radius:20px; padding:16px; }
+  .big .num{ font-family:'Kanit',sans-serif; font-weight:800; font-size:40px; color:var(--yellow); line-height:1.1; }
+  .tiles{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:10px; }
+  .tile{ background:var(--card); border-radius:16px; padding:12px; }
+  .tile .l{ font-size:12px; color:var(--muted); }
+  .tile .v{ font-family:'Kanit',sans-serif; font-weight:800; font-size:22px; }
+  .bars{ display:flex; align-items:flex-end; gap:5px; height:110px; }
+  .bars .b{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:3px; height:100%; font-size:10.5px; color:var(--muted); }
+  .bars .b i{ display:block; width:100%; background:#F2A79F; border-radius:6px 6px 2px 2px; min-height:3px; }
+  .bars .b i.max{ background:var(--red); }
+  .top-row{ margin-bottom:10px; }
+  .top-row .track{ height:8px; background:var(--ground); border-radius:999px; margin-top:5px; }
+  .top-row .track i{ display:block; height:8px; background:var(--red); border-radius:999px; }
+
+  nav.bottom{ position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid var(--line); padding:6px 8px calc(10px + env(safe-area-inset-bottom)); z-index:20; }
+  nav.bottom .in{ max-width:560px; margin:0 auto; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+  nav.bottom button{ border:none; background:transparent; min-height:52px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; color:var(--muted); font-size:12.5px; font-weight:600; position:relative; }
+  nav.bottom button.on{ color:var(--red-ink); font-weight:700; }
+  .badge{ position:absolute; top:4px; left:calc(50% + 6px); background:var(--red); color:#fff; font-size:11px; font-weight:800; border-radius:999px; min-width:18px; height:18px; padding:0 5px; display:flex; align-items:center; justify-content:center; }
+
+  .toast{ position:fixed; left:50%; bottom:96px; transform:translate(-50%,20px); background:var(--ink); color:#fff; padding:12px 20px; border-radius:999px; font-size:14px; font-weight:600; opacity:0; pointer-events:none; transition:all .25s; z-index:100; max-width:90%; text-align:center; }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
+  .live{ display:inline-block; width:8px; height:8px; border-radius:50%; background:#8A7868; margin-right:6px; }
+  .live.on{ background:#2BB45F; }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<section class="login" id="loginView">
+  <form class="login-card" id="loginForm">
+    <div class="eyebrow" style="color:var(--red-ink)">หลังร้าน</div>
+    <h1>ไก่แหกปาก</h1>
+    <p>เข้าสู่ระบบสำหรับเจ้าของร้านและพนักงาน</p>
+    <label class="field"><span>อีเมล</span><input id="email" type="email" autocomplete="username" required></label>
+    <label class="field"><span>รหัสผ่าน</span><input id="password" type="password" autocomplete="current-password" required></label>
+    <button class="btn btn-red" style="width:100%;margin-top:18px" id="loginBtn">เข้าสู่ระบบ</button>
+    <div class="err" id="loginErr"></div>
+  </form>
+</section>
+
+<!-- ============ APP ============ -->
+<div id="appView" class="hidden">
+  <header>
+    <div class="wrap">
+      <div class="h-row">
+        <div>
+          <div class="eyebrow"><span class="live" id="liveDot"></span>หลังร้าน</div>
+          <div class="h-title" id="hTitle">คิวออเดอร์</div>
+        </div>
+        <button class="open-toggle" id="openToggle" aria-pressed="true">
+          <span id="openLabel">เปิดรับ</span><span class="sw on" id="openSw"></span>
+        </button>
+      </div>
+      <div class="tabs" id="queueTabs"></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="queueView"></div>
+    <div id="menuView" class="hidden"></div>
+    <div id="salesView" class="hidden"></div>
+  </main>
+
+  <nav class="bottom">
+    <div class="in">
+      <button data-view="queue" class="on">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        คิวออเดอร์<span class="badge hidden" id="navBadge">0</span>
+      </button>
+      <button data-view="menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        เมนู
+      </button>
+      <button data-view="sales">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        ยอดขาย
+      </button>
+    </div>
+  </nav>
+</div>
+
+<div class="overlay" id="detailOverlay"><div class="sheet" id="detailSheet"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ======================= ตั้งค่า (ใช้ค่าเดียวกับหน้าลูกค้า) =======================
+const SUPABASE_URL = "https://iyrgolgqkfronjjbmkhk.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_Y7RT0pUWjz3hYD0z0ldkTg_NrVFCO-i";
+const LATE_MINUTES = 10;   // ออเดอร์ที่จ่ายแล้วแต่ยังไม่เสร็จนานเกินนี้ เวลาจะขึ้นสีแดง
+// ==============================================================================
+
+const sb = (SUPABASE_URL && SUPABASE_ANON_KEY) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+const STATUS = {
+  pending_payment: { tab: 'รอเงินเข้า', next: 'paid',       action: 'ยืนยันรับเงินแล้ว', btn: 'btn-green' },
+  paid:            { tab: 'ต้องทำ',    next: 'cooking',    action: 'เริ่มทำ',           btn: 'btn-red' },
+  cooking:         { tab: 'กำลังทำ',   next: 'delivering', action: 'ออกไปส่ง',          btn: 'btn-red' },
+  delivering:      { tab: 'กำลังส่ง',  next: 'done',       action: 'ส่งแล้ว',            btn: 'btn-green' },
+  done:            { tab: 'เสร็จ' },
+};
+const TAB_ORDER = ['pending_payment', 'paid', 'cooking', 'delivering', 'done'];
+
+let orders = [];
+let menu = [];
+let shopOpen = true;
+let currentTab = 'paid';
+let currentView = 'queue';
+let knownIds = new Set();
+let channel = null;
+
+// ---------- helpers ----------
+const $ = id => document.getElementById(id);
+function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+function baht(n){ return '฿' + Number(n || 0).toLocaleString('th-TH'); }
+function minsAgo(ts){ return Math.max(0, Math.floor((Date.now() - new Date(ts).getTime()) / 60000)); }
+function ageText(ts){ const m = minsAgo(ts); return m < 1 ? 'เมื่อกี้' : m < 60 ? `${m} นาที` : `${Math.floor(m/60)} ชม.`; }
+function timeText(ts){ return ts ? new Date(ts).toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' }) : '-'; }
+function startOfTodayISO(){
+  // เริ่มวันตามเวลาไทย (UTC+7)
+  const now = new Date(); const bkk = new Date(now.getTime() + 7*3600e3);
+  bkk.setUTCHours(0,0,0,0); return new Date(bkk.getTime() - 7*3600e3).toISOString();
+}
+let toastT;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2400); }
+function beep(){
+  try {
+    const ctx = beep.ctx || (beep.ctx = new (window.AudioContext || window.webkitAudioContext)());
+    [0, 0.18].forEach(d => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.25, ctx.currentTime + d); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + d + 0.15);
+      o.start(ctx.currentTime + d); o.stop(ctx.currentTime + d + 0.16);
+    });
+  } catch (e){}
+  if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+}
+
+// ---------- auth ----------
+$('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('loginErr').textContent = ''; $('loginBtn').disabled = true;
+  const { error } = await sb.auth.signInWithPassword({ email: $('email').value.trim(), password: $('password').value });
+  $('loginBtn').disabled = false;
+  if (error){ $('loginErr').textContent = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'; return; }
+  beep.ctx || beep(); // ปลดล็อกเสียงบนมือถือด้วยการกดครั้งนี้
+  boot();
+});
+
+async function boot(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session){ $('loginView').classList.remove('hidden'); $('appView').classList.add('hidden'); return; }
+  const { data: me } = await sb.from('staff').select('name').eq('user_id', session.user.id).maybeSingle();
+  if (!me){
+    $('loginErr').textContent = 'บัญชีนี้ยังไม่ได้เพิ่มเป็นพนักงาน (ตาราง staff)';
+    await sb.auth.signOut(); return;
+  }
+  $('loginView').classList.add('hidden'); $('appView').classList.remove('hidden');
+  await Promise.all([loadOrders(), loadMenu(), loadSettings()]);
+  orders.forEach(o => knownIds.add(o.id));
+  subscribe();
+  render();
+}
+
+// ---------- data ----------
+async function loadOrders(){
+  const { data, error } = await sb.from('orders').select('*')
+    .or(`created_at.gte.${startOfTodayISO()},status.in.(pending_payment,paid,cooking,delivering)`)
+    .order('created_at', { ascending: true });
+  if (error){ toast('โหลดออเดอร์ไม่สำเร็จ'); return; }
+  orders = data;
+}
+async function loadMenu(){
+  const { data } = await sb.from('menu_items').select('*').order('sort');
+  menu = data || [];
+}
+async function loadSettings(){
+  const { data } = await sb.from('shop_settings').select('is_open').eq('id', 1).maybeSingle();
+  shopOpen = data ? data.is_open : true;
+}
+
+function subscribe(){
+  if (channel) sb.removeChannel(channel);
+  channel = sb.channel('orders-live')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => {
+      const row = payload.new;
+      if (!row || !row.id) return;
+      const i = orders.findIndex(o => o.id === row.id);
+      if (i >= 0) orders[i] = row; else orders.push(row);
+      if (!knownIds.has(row.id)){
+        knownIds.add(row.id); beep(); toast(`ออเดอร์ใหม่ ห้อง ${row.room} ${baht(row.total)}`);
+      }
+      render();
+      if ($('detailOverlay').classList.contains('show') && $('detailSheet').dataset.id === row.id) openDetail(row.id);
+    })
+    .subscribe(status => { $('liveDot').classList.toggle('on', status === 'SUBSCRIBED'); });
+}
+// สำรอง: ดึงใหม่ทุก 30 วิ เผื่อมือถือหลับแล้ว realtime หลุด
+setInterval(async () => {
+  if ($('appView').classList.contains('hidden')) return;
+  const before = new Set(orders.map(o => o.id));
+  await loadOrders();
+  if (orders.some(o => !before.has(o.id) && !knownIds.has(o.id))){ beep(); }
+  orders.forEach(o => knownIds.add(o.id));
+  render();
+}, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('appView').classList.contains('hidden')) loadOrders().then(render); });
+
+async function setStatus(id, status){
+  const o = orders.find(x => x.id === id);
+  if (status === 'cancelled' && !confirm(`ยกเลิกออเดอร์ห้อง ${o.room} ${baht(o.total)}?\nถ้าลูกค้าโอนแล้ว อย่าลืมคืนเงินด้วยนะ`)) return;
+  const { data, error } = await sb.from('orders').update({ status }).eq('id', id).select().single();
+  if (error){ toast('อัปเดตไม่สำเร็จ ลองอีกครั้ง'); return; }
+  const i = orders.findIndex(x => x.id === id); orders[i] = data;
+  render();
+  if ($('detailOverlay').classList.contains('show')) openDetail(id);
+}
+
+// ---------- render ----------
+function render(){
+  const counts = {}; TAB_ORDER.forEach(s => counts[s] = 0);
+  orders.forEach(o => { if (o.status === 'cancelled') counts.done++; else counts[o.status]++; });
+  const todo = counts.pending_payment + counts.paid;
+  $('navBadge').textContent = todo; $('navBadge').classList.toggle('hidden', todo === 0);
+
+  $('openSw').classList.toggle('on', shopOpen);
+  $('openLabel').textContent = shopOpen ? 'เปิดรับ' : 'ปิดรับ';
+  $('openToggle').setAttribute('aria-pressed', String(shopOpen));
+
+  $('queueTabs').classList.toggle('hidden', currentView !== 'queue');
+  $('hTitle').textContent = { queue: 'คิวออเดอร์', menu: 'จัดการเมนู', sales: 'ยอดขายวันนี้' }[currentView];
+  ['queue','menu','sales'].forEach(v => $(v + 'View').classList.toggle('hidden', v !== currentView));
+  document.querySelectorAll('nav.bottom button').forEach(b => b.classList.toggle('on', b.dataset.view === currentView));
+
+  if (currentView === 'queue') renderQueue(counts);
+  if (currentView === 'menu') renderMenu();
+  if (currentView === 'sales') renderSales();
+}
+
+function renderQueue(counts){
+  $('queueTabs').innerHTML = TAB_ORDER.map(s =>
+    `<button class="tab ${s === currentTab ? 'on' : ''}" data-tab="${s}">${STATUS[s].tab} · ${counts[s]}</button>`).join('');
+  const list = orders.filter(o => currentTab === 'done' ? (o.status === 'done' || o.status === 'cancelled') : o.status === currentTab);
+  if (currentTab === 'done') list.reverse();
+  if (!list.length){
+    $('queueView').innerHTML = `<div class="empty">${currentTab === 'paid' ? 'ยังไม่มีออเดอร์ที่ต้องทำ 🍗' : 'ไม่มีออเดอร์ในช่องนี้'}</div>`;
+    return;
+  }
+  $('queueView').innerHTML = list.map(orderCard).join('');
+}
+
+function payPill(o){
+  if (o.status === 'cancelled') return `<span class="pill cancel">ยกเลิก</span>`;
+  if (o.status === 'pending_payment') return `<span class="pill wait">รอเงิน ${baht(o.total)}</span>`;
+  return `<span class="pill paid">จ่ายแล้ว ${baht(o.total)}</span>`;
+}
+function orderCard(o){
+  const s = STATUS[o.status];
+  const late = ['paid','cooking'].includes(o.status) && minsAgo(o.paid_at || o.created_at) >= LATE_MINUTES;
+  const items = (o.items || []).map(it =>
+    `<div class="o-line"><b class="q">${esc(it.qty)}×</b><span><b style="font-weight:600">${esc(it.name)}</b> <span class="opt">${esc(it.option_text)}</span></span></div>`).join('');
+  return `
+  <div class="order">
+    <div class="o-top">
+      <div class="room">ห้อง ${esc(o.room)}</div>${payPill(o)}
+      <span class="age ${late ? 'late' : ''}">${ageText(o.created_at)}</span>
+    </div>
+    <div class="o-meta">${esc(o.code)}${o.customer_name ? ' · ' + esc(o.customer_name) : ''}${o.line_display_name && !o.customer_name ? ' · ' + esc(o.line_display_name) : ''}</div>
+    <div class="o-items">${items}</div>
+    ${o.note ? `<div class="o-note">หมายเหตุ: ${esc(o.note)}</div>` : ''}
+    <div class="o-actions">
+      <button class="btn btn-ghost" data-detail="${o.id}">รายละเอียด</button>
+      ${s && s.next ? `<button class="btn ${s.btn}" data-set="${o.id}" data-status="${s.next}">${s.action}</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function openDetail(id){
+  const o = orders.find(x => x.id === id); if (!o) return;
+  const s = STATUS[o.status];
+  const stepIdx = { pending_payment: 0, paid: 1, cooking: 2, delivering: 3, done: 4, cancelled: -1 }[o.status];
+  const steps = ['จ่ายแล้ว','กำลังทำ','กำลังส่ง','ส่งแล้ว'].map((t, i) =>
+    `<div class="step ${stepIdx > i ? 'done' : ''}"><div class="bar"></div><div>${t}</div></div>`).join('');
+  const phone = (o.phone || '').replace(/[^0-9+]/g, '');
+  $('detailSheet').dataset.id = id;
+  $('detailSheet').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div><div class="o-meta" style="margin:0">${esc(o.code)} · สั่ง ${timeText(o.created_at)}</div>
+      <div class="room" style="font-size:30px;margin-top:4px">ห้อง ${esc(o.room)}</div></div>
+      <button class="icon-btn" data-close aria-label="ปิด">✕</button>
+    </div>
+    <div style="margin-top:8px">${payPill(o)}</div>
+    <div class="box">
+      <h3>ลูกค้า</h3>
+      <div class="row"><span>ชื่อ</span><b>${esc(o.customer_name || o.line_display_name || '-')}</b></div>
+      <div class="row"><span>โทร</span><b>${esc(o.phone || '-')}</b></div>
+      ${phone ? `<div style="margin-top:8px"><a class="icon-btn" href="tel:${esc(phone)}">โทรหาลูกค้า</a></div>` : ''}
+      ${o.note ? `<div class="o-note">หมายเหตุ: ${esc(o.note)}</div>` : ''}
+    </div>
+    <div class="box">
+      <h3>รายการ</h3>
+      ${(o.items || []).map(it => `<div class="row"><span><b>${esc(it.qty)}× ${esc(it.name)}</b><br><span class="opt" style="color:var(--muted);font-size:13px">${esc(it.option_text)}</span></span><b>${baht(it.unit_price * it.qty)}</b></div>`).join('')}
+      <div class="row" style="border-top:1px solid var(--line);margin-top:8px;padding-top:10px"><b class="k">รวม</b><b class="k">${baht(o.total)}</b></div>
+      ${o.paid_at ? `<div style="font-size:12.5px;color:var(--green-ink);margin-top:4px">ยืนยันรับเงิน ${timeText(o.paid_at)}</div>` : ''}
+    </div>
+    ${o.status !== 'cancelled' ? `<div class="box"><h3>สถานะ</h3><div class="steps">${steps}</div></div>` : ''}
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+      ${s && s.next ? `<button class="btn ${s.btn}" style="min-height:56px" data-set="${o.id}" data-status="${s.next}">${s.action}</button>` : ''}
+      ${!['done','cancelled'].includes(o.status) ? `<button class="btn btn-ghost" style="color:var(--red-ink)" data-set="${o.id}" data-status="cancelled">ยกเลิกออเดอร์</button>` : ''}
+    </div>`;
+  $('detailOverlay').classList.add('show');
+}
+
+function renderMenu(){
+  if (!menu.length){ $('menuView').innerHTML = '<div class="empty">ยังไม่มีเมนูในฐานข้อมูล</div>'; return; }
+  $('menuView').innerHTML = `
+    <div style="font-size:13px;color:var(--muted);margin:2px 4px 10px">สวิตช์ = เปิดขาย · ปิด = ลูกค้าเห็นว่า “หมด” ทันที</div>
+    ${menu.map(m => {
+      const priceUi = m.type === 'rice'
+        ? `฿<input class="price-in" inputmode="numeric" value="${esc(m.price)}" data-price="${esc(m.id)}" aria-label="ราคา ${esc(m.name)}">`
+        : esc((m.sizes || []).map(z => `${z.key} ฿${z.price}`).join(' · '));
+      return `<div class="m-item ${m.sold_out ? 'off' : ''}">
+        ${m.img_url ? `<img src="${esc(m.img_url)}" alt="">` : `<div class="ph"></div>`}
+        <div style="flex:1;min-width:0">
+          <div class="m-name">${esc(m.name)}</div>
+          <div class="m-sub">${m.sold_out ? 'หมดแล้ว · ลูกค้าสั่งไม่ได้' : priceUi}</div>
+        </div>
+        <button class="sw-btn" data-sold="${esc(m.id)}" aria-label="เปิดขาย ${esc(m.name)}" aria-pressed="${!m.sold_out}"><span class="sw ${m.sold_out ? '' : 'on'}"></span></button>
+      </div>`;
+    }).join('')}`;
+}
+
+function renderSales(){
+  const sold = orders.filter(o => ['paid','cooking','delivering','done'].includes(o.status) && o.created_at >= startOfTodayISO());
+  const revenue = sold.reduce((s, o) => s + o.total, 0);
+  const cancelled = orders.filter(o => o.status === 'cancelled' && o.created_at >= startOfTodayISO()).length;
+  const hours = {}; sold.forEach(o => { const h = new Date(new Date(o.created_at).getTime() + 7*3600e3).getUTCHours(); hours[h] = (hours[h] || 0) + 1; });
+  const hs = Object.keys(hours).map(Number); const minH = hs.length ? Math.min(...hs) : 10, maxH = hs.length ? Math.max(...hs) : 20;
+  const range = []; for (let h = minH; h <= maxH; h++) range.push(h);
+  const peak = Math.max(1, ...Object.values(hours));
+  const tally = {}; sold.forEach(o => (o.items || []).forEach(it => { tally[it.name] = (tally[it.name] || 0) + it.qty; }));
+  const top = Object.entries(tally).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const topMax = top.length ? top[0][1] : 1;
+  $('salesView').innerHTML = `
+    <div class="big"><div style="font-size:13px;color:#CDBFAE">รับเงินแล้ววันนี้</div><div class="num">${baht(revenue)}</div></div>
+    <div class="tiles">
+      <div class="tile"><div class="l">ออเดอร์</div><div class="v">${sold.length}</div></div>
+      <div class="tile"><div class="l">เฉลี่ย/ออเดอร์</div><div class="v">${baht(sold.length ? Math.round(revenue / sold.length) : 0)}</div></div>
+      <div class="tile"><div class="l">ยกเลิก</div><div class="v">${cancelled}</div></div>
+    </div>
+    <div class="box"><h3>ออเดอร์ตามช่วงเวลา</h3>
+      ${sold.length ? `<div class="bars">${range.map(h => `<div class="b">${hours[h] || ''}<i class="${hours[h] === peak ? 'max' : ''}" style="height:${Math.round((hours[h] || 0) / peak * 84)}px"></i>${h}</div>`).join('')}</div>` : '<div class="empty" style="padding:16px">ยังไม่มียอดวันนี้</div>'}
+    </div>
+    <div class="box"><h3>ขายดีวันนี้</h3>
+      ${top.length ? top.map(([n, q]) => `<div class="top-row"><div class="row" style="padding:0"><b style="font-weight:600">${esc(n)}</b><span style="color:var(--muted)">${q}</span></div><div class="track"><i style="width:${Math.round(q / topMax * 100)}%"></i></div></div>`).join('') : '<div style="color:var(--muted);font-size:14px">-</div>'}
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:14px" id="logoutBtn">ออกจากระบบ</button>`;
+}
+
+// ---------- events ----------
+document.addEventListener('click', async e => {
+  const t = e.target.closest('button, [data-close]'); if (!t) return;
+  if (t.dataset.view){ currentView = t.dataset.view; if (currentView === 'menu') await loadMenu(); render(); window.scrollTo(0, 0); return; }
+  if (t.dataset.tab){ currentTab = t.dataset.tab; render(); return; }
+  if (t.dataset.detail){ openDetail(t.dataset.detail); return; }
+  if (t.dataset.set){ t.disabled = true; await setStatus(t.dataset.set, t.dataset.status); t.disabled = false; return; }
+  if (t.hasAttribute('data-close')){ $('detailOverlay').classList.remove('show'); return; }
+  if (t.dataset.sold){
+    const m = menu.find(x => x.id === t.dataset.sold);
+    const { error } = await sb.from('menu_items').update({ sold_out: !m.sold_out }).eq('id', m.id);
+    if (error){ toast('บันทึกไม่สำเร็จ'); return; }
+    m.sold_out = !m.sold_out; renderMenu(); toast(m.sold_out ? `${m.name} → หมด` : `${m.name} → เปิดขาย`); return;
+  }
+  if (t.id === 'openToggle'){
+    const next = !shopOpen;
+    if (!next && !confirm('ปิดรับออเดอร์ชั่วคราว?')) return;
+    const { error } = await sb.from('shop_settings').update({ is_open: next }).eq('id', 1);
+    if (error){ toast('บันทึกไม่สำเร็จ'); return; }
+    shopOpen = next; render(); toast(next ? 'เปิดรับออเดอร์แล้ว' : 'ปิดรับออเดอร์แล้ว'); return;
+  }
+  if (t.id === 'logoutBtn'){ await sb.auth.signOut(); location.reload(); }
+});
+$('detailOverlay').addEventListener('click', e => { if (e.target === $('detailOverlay')) $('detailOverlay').classList.remove('show'); });
+document.addEventListener('change', async e => {
+  const id = e.target.dataset && e.target.dataset.price; if (!id) return;
+  const price = parseInt(e.target.value, 10);
+  if (!(price > 0)){ toast('ราคาไม่ถูกต้อง'); return; }
+  const { error } = await sb.from('menu_items').update({ price }).eq('id', id);
+  if (error){ toast('บันทึกราคาไม่สำเร็จ'); return; }
+  const m = menu.find(x => x.id === id); m.price = price; toast(`${m.name} ราคา ${baht(price)}`);
+});
+setInterval(() => { if (currentView === 'queue' && !$('appView').classList.contains('hidden')) render(); }, 30000);
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY){
+  $('loginErr').textContent = 'ยังไม่ได้ใส่ SUPABASE_URL / SUPABASE_ANON_KEY ในไฟล์นี้';
+} else {
+  boot();
+}
+</script>
+</body>
+</html>
