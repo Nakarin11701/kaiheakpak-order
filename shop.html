@@ -80,7 +80,7 @@
   .box{ background:var(--card); border-radius:18px; padding:14px 16px; margin-top:10px; }
   .box h3{ font-family:'Kanit',sans-serif; font-weight:600; font-size:15px; color:var(--muted); margin-bottom:8px; }
   .row{ display:flex; justify-content:space-between; gap:12px; font-size:14.5px; padding:3px 0; }
-  .steps{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+  .steps{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
   .step .bar{ height:6px; border-radius:999px; background:var(--line); }
   .step.done .bar{ background:var(--green); }
   .step div:last-child{ font-size:12px; text-align:center; margin-top:6px; color:var(--muted); }
@@ -192,19 +192,21 @@ const LATE_MINUTES = 10;   // ออเดอร์ที่จ่ายแล�
 
 const sb = (SUPABASE_URL && SUPABASE_ANON_KEY) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
+// ขั้นตอนร้าน: รอเงินเข้า → กำลังทำ → ส่งสำเร็จ  (เดินส่งในหอ ไม่มีขั้นกำลังส่ง)
 const STATUS = {
-  pending_payment: { tab: 'รอเงินเข้า', next: 'paid',       action: 'ยืนยันรับเงินแล้ว', btn: 'btn-green' },
-  paid:            { tab: 'ต้องทำ',    next: 'cooking',    action: 'เริ่มทำ',           btn: 'btn-red' },
-  cooking:         { tab: 'กำลังทำ',   next: 'delivering', action: 'ออกไปส่ง',          btn: 'btn-red' },
-  delivering:      { tab: 'กำลังส่ง',  next: 'done',       action: 'ส่งแล้ว',            btn: 'btn-green' },
-  done:            { tab: 'เสร็จ' },
+  pending_payment: { tab: 'รอเงินเข้า', next: 'cooking', action: 'ยืนยันรับเงิน · เริ่มทำ', btn: 'btn-red' },
+  paid:            { tab: 'กำลังทำ',   next: 'done',    action: 'ส่งสำเร็จ',             btn: 'btn-green' },
+  cooking:         { tab: 'กำลังทำ',   next: 'done',    action: 'ส่งสำเร็จ',             btn: 'btn-green' },
+  delivering:      { tab: 'กำลังทำ',   next: 'done',    action: 'ส่งสำเร็จ',             btn: 'btn-green' },
+  done:            { tab: 'ส่งสำเร็จ' },
 };
-const TAB_ORDER = ['pending_payment', 'paid', 'cooking', 'delivering', 'done'];
+const TAB_ORDER = ['pending_payment', 'cooking', 'done'];
+const tabOf = s => (s === 'paid' || s === 'delivering') ? 'cooking' : (s === 'cancelled' ? 'done' : s);
 
 let orders = [];
 let menu = [];
 let shopOpen = true;
-let currentTab = 'paid';
+let currentTab = 'pending_payment';
 let currentView = 'queue';
 let knownIds = new Set();
 let channel = null;
@@ -319,8 +321,8 @@ async function setStatus(id, status){
 // ---------- render ----------
 function render(){
   const counts = {}; TAB_ORDER.forEach(s => counts[s] = 0);
-  orders.forEach(o => { if (o.status === 'cancelled') counts.done++; else counts[o.status]++; });
-  const todo = counts.pending_payment + counts.paid;
+  orders.forEach(o => { counts[tabOf(o.status)]++; });
+  const todo = counts.pending_payment + counts.cooking;
   $('navBadge').textContent = todo; $('navBadge').classList.toggle('hidden', todo === 0);
 
   $('openSw').classList.toggle('on', shopOpen);
@@ -340,10 +342,10 @@ function render(){
 function renderQueue(counts){
   $('queueTabs').innerHTML = TAB_ORDER.map(s =>
     `<button class="tab ${s === currentTab ? 'on' : ''}" data-tab="${s}">${STATUS[s].tab} · ${counts[s]}</button>`).join('');
-  const list = orders.filter(o => currentTab === 'done' ? (o.status === 'done' || o.status === 'cancelled') : o.status === currentTab);
+  const list = orders.filter(o => tabOf(o.status) === currentTab);
   if (currentTab === 'done') list.reverse();
   if (!list.length){
-    $('queueView').innerHTML = `<div class="empty">${currentTab === 'paid' ? 'ยังไม่มีออเดอร์ที่ต้องทำ 🍗' : 'ไม่มีออเดอร์ในช่องนี้'}</div>`;
+    $('queueView').innerHTML = `<div class="empty">${currentTab === 'pending_payment' ? 'ยังไม่มีออเดอร์ใหม่ 🍗' : currentTab === 'cooking' ? 'ไม่มีออเดอร์ที่กำลังทำ' : 'ยังไม่มีออเดอร์ที่ส่งสำเร็จวันนี้'}</div>`;
     return;
   }
   $('queueView').innerHTML = list.map(orderCard).join('');
@@ -356,7 +358,7 @@ function payPill(o){
 }
 function orderCard(o){
   const s = STATUS[o.status];
-  const late = ['paid','cooking'].includes(o.status) && minsAgo(o.paid_at || o.created_at) >= LATE_MINUTES;
+  const late = tabOf(o.status) === 'cooking' && minsAgo(o.paid_at || o.created_at) >= LATE_MINUTES;
   const items = (o.items || []).map(it =>
     `<div class="o-line"><b class="q">${esc(it.qty)}×</b><span><b style="font-weight:600">${esc(it.name)}</b> <span class="opt">${esc(it.option_text)}</span></span></div>`).join('');
   return `
@@ -378,8 +380,8 @@ function orderCard(o){
 function openDetail(id){
   const o = orders.find(x => x.id === id); if (!o) return;
   const s = STATUS[o.status];
-  const stepIdx = { pending_payment: 0, paid: 1, cooking: 2, delivering: 3, done: 4, cancelled: -1 }[o.status];
-  const steps = ['จ่ายแล้ว','กำลังทำ','กำลังส่ง','ส่งแล้ว'].map((t, i) =>
+  const stepIdx = { pending_payment: 0, paid: 2, cooking: 2, delivering: 2, done: 3, cancelled: -1 }[o.status];
+  const steps = ['จ่ายแล้ว','กำลังทำ','ส่งสำเร็จ'].map((t, i) =>
     `<div class="step ${stepIdx > i ? 'done' : ''}"><div class="bar"></div><div>${t}</div></div>`).join('');
   const phone = (o.phone || '').replace(/[^0-9+]/g, '');
   $('detailSheet').dataset.id = id;
