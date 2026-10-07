@@ -595,6 +595,14 @@
   <button class="btn-main center" style="width:100%;margin-top:14px" id="roomSave">บันทึก</button>
 </div></div>
 
+<!-- cancel confirm sheet -->
+<div class="overlay" id="cancelOverlay" role="dialog" aria-modal="true" aria-labelledby="cancelTitle"><div class="room-sheet">
+  <div class="k" id="cancelTitle" style="font-weight:700;font-size:19px">ยกเลิกออเดอร์ <span id="cancelCode"></span>?</div>
+  <div class="status wait" style="margin:12px 0 0"><div><div class="t">โอนเงินไปแล้วหรือยัง?</div>ถ้าโอนแล้ว อย่ากดยกเลิกนะครับ ให้ทักแชทร้านแทน ร้านจะคืนเงินให้</div></div>
+  <button class="btn-main center" style="width:100%;margin-top:14px;background:#C81E14 !important" id="cancelYes">ยกเลิกออเดอร์</button>
+  <button class="btn-soft" style="margin-top:10px" id="cancelNo">ไม่ยกเลิก</button>
+</div></div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -989,13 +997,14 @@ function renderPayStatus(){
 }
 async function cancelOrder(){
   if (!order || !order.token) return;
-  if (!confirm(`ยกเลิกออเดอร์ ${order.code} ?\n\n⚠️ ถ้าโอนเงินไปแล้ว อย่ากดยกเลิก ให้ทักแชทร้านแทน ร้านจะได้คืนเงินให้`)) return;
+  if (!(await askCancel(order.code))) return;
   const btn = $('cancelOrderBtn'); btn.disabled = true;
   const { data, error } = await sb.rpc('cancel_my_order', { p_code: order.code, p_token: order.token });
   btn.disabled = false;
   if (error){
     if (/CANNOT_CANCEL/.test(error.message || '')){ toast('ร้านยืนยันรับเงินแล้ว ยกเลิกเองไม่ได้ ทักแชทร้านนะครับ'); checkStatus(); }
-    else toast('ยกเลิกไม่สำเร็จ ลองใหม่อีกครั้งนะครับ');
+    else if (/NOT_FOUND/.test(error.message || '')) toast('ไม่พบออเดอร์นี้ในระบบ ทักแชทร้านนะครับ');
+    else toast('ยกเลิกไม่สำเร็จ เช็กเน็ตแล้วลองใหม่ หรือทักแชทร้านนะครับ');
     return;
   }
   order.status = 'cancelled'; order.cancelledBy = 'customer';
@@ -1003,6 +1012,15 @@ async function cancelOrder(){
   renderPayStatus(); renderCartBar();
   toast('ยกเลิกออเดอร์แล้ว');
   if (canSendToChat()){ try { await liff.sendMessages([{ type: 'text', text: `❌ ขอยกเลิกออเดอร์ ${order.code} (ห้อง ${order.room}) ครับ` }]); } catch (e){} }
+}
+function askCancel(code){
+  return new Promise(res => {
+    const ov = $('cancelOverlay'); $('cancelCode').textContent = code; ov.classList.add('on');
+    const done = v => { ov.classList.remove('on'); $('cancelYes').onclick = $('cancelNo').onclick = ov.onclick = null; res(v); };
+    $('cancelYes').onclick = () => done(true);
+    $('cancelNo').onclick = () => done(false);
+    ov.onclick = e => { if (e.target === ov) done(false); };
+  });
 }
 function copyOrder(){
   const done = () => toast('คัดลอกรายการแล้ว');
