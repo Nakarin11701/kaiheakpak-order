@@ -205,7 +205,7 @@
       </button>
       <button data-view="promo">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4a1 1 0 0 0 1 1h2l5 4V5L7 9H5a1 1 0 0 0-1 1z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg>
-        โปรโมชั่น
+        โปร/ประกาศ
       </button>
     </div>
   </nav>
@@ -367,7 +367,7 @@ function render(){
   $('openToggle').setAttribute('aria-pressed', String(shopOpen));
 
   $('queueTabs').classList.toggle('hidden', currentView !== 'queue');
-  $('hTitle').textContent = { queue: 'คิวออเดอร์', menu: 'จัดการเมนู', sales: 'ยอดขายวันนี้', promo: 'โปรโมชั่น' }[currentView];
+  $('hTitle').textContent = { queue: 'คิวออเดอร์', menu: 'จัดการเมนู', sales: 'ยอดขายวันนี้', promo: 'โปรโมชั่น & ประกาศ' }[currentView];
   ['queue','menu','sales','promo'].forEach(v => $(v + 'View').classList.toggle('hidden', v !== currentView));
   document.querySelectorAll('nav.bottom button').forEach(b => b.classList.toggle('on', b.dataset.view === currentView));
 
@@ -690,55 +690,69 @@ function promoState(p){
   return ['paid', 'กำลังแสดง'];
 }
 function renderPromos(){
-  const rows = promos.map(p => {
+  const card = p => {
     const [cls, label] = promoState(p);
     const when = (p.starts_at || p.ends_at) ? `${p.starts_at ? timeDate(p.starts_at) : 'ตอนนี้'} – ${p.ends_at ? timeDate(p.ends_at) : 'ไม่มีกำหนด'}` : 'แสดงตลอด';
+    const ann = p.kind === 'announce';
     return `<button class="promo-card" data-edit-promo="${esc(p.id)}">
       ${p.image_url ? `<img src="${esc(p.image_url)}" alt="">` : '<div class="promo-ph">ยังไม่มีรูปแบนเนอร์</div>'}
       <div class="promo-body">
         <div style="display:flex;align-items:center;gap:8px"><b class="k" style="font-size:16px;flex:1">${esc(p.title)}</b><span class="pill ${cls}">${label}</span></div>
-        <div style="font-size:13px;color:var(--muted);margin-top:3px">${p.price != null ? `สั่งได้ ${baht(p.price)}` : 'แบนเนอร์อย่างเดียว (สั่งไม่ได้)'} · ${when}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:3px">${ann ? 'ประกาศ · ขึ้นสไลด์ด้านบนอย่างเดียว' : (p.price != null ? `สั่งได้ ${baht(p.price)}` : 'แบนเนอร์อย่างเดียว (สั่งไม่ได้)')} · ${when}</div>
       </div>
     </button>`;
-  }).join('');
+  };
+  const anns = promos.filter(p => p.kind === 'announce').map(card).join('');
+  const rows = promos.filter(p => p.kind !== 'announce').map(card).join('');
   $('promoView').innerHTML = `
-    <button class="btn btn-red" style="width:100%;margin-bottom:10px" data-new-promo>+ เพิ่มโปรโมชั่น</button>
-    <div style="font-size:13px;color:var(--muted);margin:2px 4px 10px">โปรที่กำลังแสดงจะขึ้นเป็น<b>ภาพสไลด์ด้านบน</b>และในหมวด<b>“โปรโมชั่น”</b>ของหน้าลูกค้า</div>
-    ${rows || '<div class="empty">ยังไม่มีโปรโมชั่น</div>'}`;
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <button class="btn btn-red" data-new-promo>+ เพิ่มโปรโมชั่น</button>
+      <button class="btn btn-ghost" data-new-announce>+ เพิ่มประกาศ</button>
+    </div>
+    <div style="font-size:13px;color:var(--muted);margin:2px 4px 14px;line-height:1.55">
+      <b>ประกาศ</b> = ขึ้นเป็นภาพสไลด์ด้านบนอย่างเดียว (เช่น เมนูใหม่เร็วๆ นี้, ร้านหยุด)<br>
+      <b>โปรโมชั่น</b> = ขึ้นสไลด์ด้านบน และอยู่ในหมวด “โปรโมชั่น” ให้ลูกค้ากดดู/สั่ง</div>
+    <div class="k" style="font-weight:700;font-size:16px;margin:4px 4px 8px">ประกาศ</div>
+    ${anns || '<div class="empty" style="padding:14px">ยังไม่มีประกาศ</div>'}
+    <div class="k" style="font-weight:700;font-size:16px;margin:16px 4px 8px">โปรโมชั่น</div>
+    ${rows || '<div class="empty" style="padding:14px">ยังไม่มีโปรโมชั่น</div>'}`;
 }
 const timeDate = ts => new Date(ts).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-function openPromoEditor(id){
+function openPromoEditor(id, kind){
   const p = id ? promos.find(x => x.id === id) : null;
-  editing = p ? { ...p } : { id: null, title: '', detail: '', image_url: null, price: null, starts_at: null, ends_at: null, active: true,
+  editing = p ? { ...p, kind: p.kind === 'announce' ? 'announce' : 'promo' } : { id: null, kind: kind === 'announce' ? 'announce' : 'promo', title: '', detail: '', image_url: null, price: null, starts_at: null, ends_at: null, active: true,
                              sort: promos.reduce((s, x) => Math.max(s, x.sort || 0), 0) + 1 };
   pendingImage = null; renderPromoEditor(); $('detailOverlay').classList.add('show');
 }
 function renderPromoEditor(){
   const e = editing, img = pendingImage ? URL.createObjectURL(pendingImage) : e.image_url;
+  const ann = e.kind === 'announce', noun = ann ? 'ประกาศ' : 'โปรโมชั่น';
   $('detailSheet').dataset.id = '';
   $('detailSheet').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <div class="room" style="font-size:22px">${e.id ? 'แก้ไขโปรโมชั่น' : 'เพิ่มโปรโมชั่น'}</div>
+      <div class="room" style="font-size:22px">${e.id ? 'แก้ไข' : 'เพิ่ม'}${noun}</div>
       <button class="icon-btn" data-close aria-label="ปิด">✕</button>
     </div>
+    <div class="seg" style="margin-top:12px"><button class="${ann ? '' : 'on'}" data-promo-kind="promo">โปรโมชั่น</button><button class="${ann ? 'on' : ''}" data-promo-kind="announce">ประกาศ</button></div>
+    <div style="font-size:12.5px;color:var(--muted);margin:6px 4px 0;line-height:1.5">${ann ? 'ประกาศ: ขึ้นเป็นภาพสไลด์ด้านบนอย่างเดียว ไม่อยู่ในหมวดโปรโมชั่น ลูกค้ากดไม่ได้ และไม่มีป้ายชื่อทับรูป' : 'โปรโมชั่น: ขึ้นสไลด์ด้านบน (มีป้ายชื่อมุมซ้ายล่าง) และอยู่ในหมวดโปรโมชั่น'}</div>
     <div class="box">
       <label class="img-pick wide">${img ? `<img src="${esc(img)}" alt="">` : '<span>+ เพิ่มรูปแบนเนอร์</span>'}
         <input type="file" accept="image/*" id="promoImgInput" hidden></label>
       <div style="font-size:12.5px;color:var(--muted);margin-top:6px;text-align:center">รูปแนวนอน สัดส่วนประมาณ 5:2 (เช่น 1200×480) จะพอดีแถบด้านบน</div>
-      <label class="field"><span>หัวข้อโปรโมชั่น</span><input id="pTitle" value="${esc(e.title)}" placeholder="เช่น เซ็ตอิ่มคุ้ม ไก่ + ฟรายส์"></label>
-      <label class="field"><span>รายละเอียด</span><input id="pDetail" value="${esc(e.detail)}" placeholder="เช่น ข้าวไก่กรอบ 1 + เฟรนช์ฟรายส์ M"></label>
-      <label class="field"><span>ราคาโปร (บาท) — เว้นว่าง = เป็นแบนเนอร์อย่างเดียว ลูกค้าสั่งไม่ได้</span><input id="pPrice" value="${esc(e.price ?? '')}" inputmode="numeric" placeholder="เช่น 89"></label>
+      <label class="field"><span>${ann ? 'ชื่อประกาศ (ไว้ดูในหลังร้าน)' : 'หัวข้อโปรโมชั่น'}</span><input id="pTitle" value="${esc(e.title)}" placeholder="${ann ? 'เช่น เมนูใหม่เร็วๆ นี้' : 'เช่น เซ็ตอิ่มคุ้ม ไก่ + ฟรายส์'}"></label>
+      <label class="field" ${ann ? 'style="display:none"' : ''}><span>รายละเอียด</span><input id="pDetail" value="${esc(e.detail)}" placeholder="เช่น ข้าวไก่กรอบ 1 + เฟรนช์ฟรายส์ M"></label>
+      <label class="field" ${ann ? 'style="display:none"' : ''}><span>ราคาโปร (บาท) — เว้นว่าง = เป็นแบนเนอร์อย่างเดียว ลูกค้าสั่งไม่ได้</span><input id="pPrice" value="${esc(e.price ?? '')}" inputmode="numeric" placeholder="เช่น 89"></label>
       <div class="grid2">
         <label class="field" style="margin:0"><span>เริ่มวันที่</span><input type="date" id="pStart" value="${dateIn(e.starts_at)}"></label>
         <label class="field" style="margin:0"><span>ถึงวันที่</span><input type="date" id="pEnd" value="${dateIn(e.ends_at)}"></label>
       </div>
       <div style="font-size:12.5px;color:var(--muted);margin-top:6px">เว้นวันที่ว่าง = แสดงตลอดจนกว่าจะปิดเอง</div>
-      <label class="check"><input type="checkbox" id="pActive" ${e.active ? 'checked' : ''}> เปิดแสดงโปรนี้</label>
+      <label class="check"><input type="checkbox" id="pActive" ${e.active ? 'checked' : ''}> เปิดแสดง${noun}นี้</label>
     </div>
     <div class="err" id="editErr"></div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
-      <button class="btn btn-red" style="min-height:54px" data-save-promo>บันทึกโปรโมชั่น</button>
-      ${e.id ? `<button class="btn btn-ghost" style="color:var(--red-ink)" data-del-promo>ลบโปรโมชั่นนี้</button>` : ''}
+      <button class="btn btn-red" style="min-height:54px" data-save-promo>บันทึก${noun}</button>
+      ${e.id ? `<button class="btn btn-ghost" style="color:var(--red-ink)" data-del-promo>ลบ${noun}นี้</button>` : ''}
     </div>`;
   $('promoImgInput').onchange = async ev => {
     const f = ev.target.files[0]; if (!f) return;
@@ -748,29 +762,31 @@ function renderPromoEditor(){
 function collectPromoForm(){
   const e = editing, v = id => $(id).value.trim();
   e.title = v('pTitle'); e.detail = v('pDetail');
-  e.price = v('pPrice') === '' ? null : parseInt(v('pPrice'), 10);
+  e.price = (e.kind === 'announce' || v('pPrice') === '') ? null : parseInt(v('pPrice'), 10);
+  if (e.kind === 'announce') e.detail = '';
   e.starts_at = dateOut(v('pStart'), false); e.ends_at = dateOut(v('pEnd'), true);
   e.active = $('pActive').checked;
 }
 async function savePromo(btn){
   collectPromoForm();
   const e = editing, err = m => { $('editErr').textContent = m; };
-  if (!e.title) return err('ใส่หัวข้อโปรโมชั่นก่อนนะ');
+  if (!e.title) return err(e.kind === 'announce' ? 'ใส่ชื่อประกาศก่อนนะ' : 'ใส่หัวข้อโปรโมชั่นก่อนนะ');
+  if (e.kind === 'announce' && !pendingImage && !e.image_url) return err('ประกาศต้องมีรูป (รูปแนวนอน 5:2) เพราะจะขึ้นเป็นภาพสไลด์อย่างเดียว');
   if (e.price != null && !(e.price > 0)) return err('ราคาโปรต้องมากกว่า 0 หรือเว้นว่าง');
   if (e.starts_at && e.ends_at && new Date(e.ends_at) < new Date(e.starts_at)) return err('วันสิ้นสุดต้องอยู่หลังวันเริ่ม');
-  if (!pendingImage && !e.image_url && !confirm('ยังไม่มีรูปแบนเนอร์ โปรนี้จะไม่ขึ้นในสไลด์ด้านบน (ขึ้นเฉพาะในหมวดโปรโมชั่น)\nบันทึกต่อไหม?')) return;
+  if (e.kind !== 'announce' && !pendingImage && !e.image_url && !confirm('ยังไม่มีรูปแบนเนอร์ โปรนี้จะไม่ขึ้นในสไลด์ด้านบน (ขึ้นเฉพาะในหมวดโปรโมชั่น)\nบันทึกต่อไหม?')) return;
   btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
   try {
     if (pendingImage) e.image_url = await uploadImage(pendingImage, 'promo');
-    const row = { title: e.title, detail: e.detail, image_url: e.image_url || null, price: e.price, starts_at: e.starts_at, ends_at: e.ends_at, active: !!e.active, sort: e.sort || 0 };
+    const row = { title: e.title, detail: e.detail, image_url: e.image_url || null, price: e.price, starts_at: e.starts_at, ends_at: e.ends_at, active: !!e.active, sort: e.sort || 0, kind: e.kind === 'announce' ? 'announce' : 'promo' };
     const { error } = e.id ? await sb.from('promotions').update(row).eq('id', e.id) : await sb.from('promotions').insert(row);
     if (error) throw error;
     await loadPromos(); renderPromos(); $('detailOverlay').classList.remove('show');
-    toast('บันทึกโปรโมชั่นแล้ว');
-  } catch (x){ console.warn(x); err('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'); btn.disabled = false; btn.textContent = 'บันทึกโปรโมชั่น'; }
+    toast(e.kind === 'announce' ? 'บันทึกประกาศแล้ว' : 'บันทึกโปรโมชั่นแล้ว');
+  } catch (x){ console.warn(x); err('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'); btn.disabled = false; btn.textContent = e.kind === 'announce' ? 'บันทึกประกาศ' : 'บันทึกโปรโมชั่น'; }
 }
 async function deletePromo(){
-  if (!confirm(`ลบโปรโมชั่น “${editing.title}”?`)) return;
+  if (!confirm(`ลบ${editing.kind === 'announce' ? 'ประกาศ' : 'โปรโมชั่น'} “${editing.title}”?`)) return;
   const { error } = await sb.from('promotions').delete().eq('id', editing.id);
   if (error){ toast('ลบไม่สำเร็จ'); return; }
   await loadPromos(); renderPromos(); $('detailOverlay').classList.remove('show'); toast('ลบโปรโมชั่นแล้ว');
@@ -789,7 +805,9 @@ document.addEventListener('click', async ev => {
   if (t.dataset.delSauce){ collectMenuForm(); editing.sauces.splice(+t.dataset.delSauce, 1); return renderMenuEditor(); }
   if (t.hasAttribute('data-save-menu')) return saveMenu(t);
   if (t.hasAttribute('data-del-menu')) return deleteMenu();
-  if (t.hasAttribute('data-new-promo')) return openPromoEditor(null);
+  if (t.hasAttribute('data-new-promo')) return openPromoEditor(null, 'promo');
+  if (t.hasAttribute('data-new-announce')) return openPromoEditor(null, 'announce');
+  if (t.dataset.promoKind){ collectPromoForm(); editing.kind = t.dataset.promoKind; return renderPromoEditor(); }
   if (t.dataset.editPromo) return openPromoEditor(t.dataset.editPromo);
   if (t.hasAttribute('data-save-promo')) return savePromo(t);
   if (t.hasAttribute('data-del-promo')) return deletePromo();

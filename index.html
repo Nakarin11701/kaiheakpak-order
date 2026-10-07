@@ -637,6 +637,7 @@ let MENU = [];
 let shopOpen = true;
 let cat = 'rice';
 let PROMOS = [];
+let ANNOUNCES = [];   // ประกาศ: รูปสไลด์ด้านบนอย่างเดียว
 let catTouched = false;
 let slideTimer = null;
 let query = '';
@@ -723,9 +724,11 @@ async function loadMenu(){
       shopOpen = st ? st.is_open : true;
       try {
         const { data: pr } = await sb.from('promotions').select('*').order('sort').order('created_at');
-        PROMOS = (pr || []).map(p => ({ id: 'promo:' + p.id, type: 'promo', name: p.title, price: p.price, description: p.detail || '',
+        const all = (pr || []).map(p => ({ id: 'promo:' + p.id, type: 'promo', kind: p.kind === 'announce' ? 'announce' : 'promo', name: p.title, price: p.price, description: p.detail || '',
           img: p.image_url || '', orderable: p.price != null, sizes: [], sauces: [], soldOut: false }));
-      } catch (e){ PROMOS = []; }
+        ANNOUNCES = all.filter(p => p.kind === 'announce' && p.img);
+        PROMOS = all.filter(p => p.kind !== 'announce');
+      } catch (e){ PROMOS = []; ANNOUNCES = []; }
       renderSlides();
     } catch (e){ console.warn('ใช้เมนูสำรอง (ต่อฐานข้อมูลไม่ได้):', (e && (e.message || e.code)) || e); MENU = FALLBACK_MENU; }
   } else MENU = FALLBACK_MENU;
@@ -736,8 +739,9 @@ function renderSlides(){
   // ภาพแรก = แบนเนอร์ร้านไก่แหกปากเสมอ แล้วตามด้วยรูปโปรโมชั่น เลื่อนวนในช่องเดียวกัน
   if (!SHOP_BANNER){ const first = document.querySelector('#slides img'); SHOP_BANNER = first ? first.getAttribute('src') : ''; }
   const promoSlides = PROMOS.filter(p => p.img);
-  const total = 1 + promoSlides.length;
+  const total = 1 + ANNOUNCES.length + promoSlides.length;
   $('slides').innerHTML = `<div class="slide"><img src="${SHOP_BANNER}" alt="ไก่แหกปาก"></div>` +
+    ANNOUNCES.map(p => `<div class="slide" role="img" aria-label="ประกาศ ${esc(p.name)}"><img src="${esc(p.img)}" alt=""></div>`).join('') +
     promoSlides.map(p => `<button class="slide" data-item="${esc(p.id)}" aria-label="โปรโมชั่น ${esc(p.name)}">
       <img src="${esc(p.img)}" alt="">${p.name ? `<span class="cap">${esc(p.name)}${p.orderable ? ' · ' + baht(p.price) : ''}</span>` : ''}</button>`).join('');
   const withImg = { length: total };
