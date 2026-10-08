@@ -41,6 +41,10 @@
   .h-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
   .eyebrow{ font-size:12px; font-weight:700; letter-spacing:1px; color:var(--yellow); }
   .h-title{ font-family:'Kanit',sans-serif; font-weight:700; font-size:22px; line-height:1.2; }
+  .line-btn{ margin-left:auto; padding:0 12px !important; gap:6px !important; font-size:17px !important; }
+  .h-row .open-toggle{ white-space:nowrap; flex-shrink:0; }
+  .line-btn .ldot{ width:8px; height:8px; border-radius:50%; background:#9A8F86; }
+  .line-btn .ldot.on{ background:#22B35A; box-shadow:0 0 0 3px rgba(34,179,90,.25); }
   .open-toggle{ display:flex; align-items:center; gap:10px; min-height:44px; padding:0 8px 0 14px; border-radius:999px; background:rgba(255,255,255,.1); font-size:13.5px; font-weight:700; border:none; color:#fff; }
   .sw{ width:44px; height:26px; border-radius:999px; background:#6b5b50; position:relative; transition:background .2s; flex-shrink:0; }
   .sw::after{ content:""; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:transform .2s; }
@@ -174,6 +178,7 @@
           <div class="eyebrow"><span class="live" id="liveDot"></span>หลังร้าน</div>
           <div class="h-title" id="hTitle">คิวออเดอร์</div>
         </div>
+        <button class="open-toggle line-btn" id="lineBtn" aria-label="ตั้งค่าแจ้งลูกค้าทาง LINE"><span class="ldot" id="lineDot"></span>🔔</button>
         <button class="open-toggle" id="openToggle" aria-pressed="true">
           <span id="openLabel">เปิดรับ</span><span class="sw on" id="openSw"></span>
         </button>
@@ -289,7 +294,7 @@ async function boot(){
     await sb.auth.signOut(); return;
   }
   $('loginView').classList.add('hidden'); $('appView').classList.remove('hidden');
-  await Promise.all([loadOrders(), loadMenu(), loadSettings()]);
+  await Promise.all([loadOrders(), loadMenu(), loadSettings(), loadLineCfg()]);
   orders.forEach(o => knownIds.add(o.id));
   subscribe();
   render();
@@ -367,7 +372,7 @@ function render(){
   $('openToggle').setAttribute('aria-pressed', String(shopOpen));
 
   $('queueTabs').classList.toggle('hidden', currentView !== 'queue');
-  $('hTitle').textContent = { queue: 'คิวออเดอร์', menu: 'จัดการเมนู', sales: 'ยอดขายวันนี้', promo: 'โปรโมชั่น & ประกาศ' }[currentView];
+  $('hTitle').textContent = { queue: 'คิวออเดอร์', menu: 'จัดการเมนู', sales: 'ยอดขายวันนี้', promo: 'โปร & ประกาศ' }[currentView];
   ['queue','menu','sales','promo'].forEach(v => $(v + 'View').classList.toggle('hidden', v !== currentView));
   document.querySelectorAll('nav.bottom button').forEach(b => b.classList.toggle('on', b.dataset.view === currentView));
 
@@ -785,6 +790,50 @@ async function savePromo(btn){
     toast(e.kind === 'announce' ? 'บันทึกประกาศแล้ว' : 'บันทึกโปรโมชั่นแล้ว');
   } catch (x){ console.warn(x); err('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'); btn.disabled = false; btn.textContent = e.kind === 'announce' ? 'บันทึกประกาศ' : 'บันทึกโปรโมชั่น'; }
 }
+let lineCfg = null;
+async function loadLineCfg(){
+  try { const { data, error } = await sb.rpc('kt_line_cfg_status'); if (error) throw error; lineCfg = data || {}; }
+  catch (e){ lineCfg = { error: true }; }
+  const on = lineCfg && lineCfg.has_token && lineCfg.notify_customers;
+  $('lineDot').classList.toggle('on', !!on);
+  return lineCfg;
+}
+async function openLineSettings(){
+  const c = await loadLineCfg();
+  $('detailSheet').dataset.id = '';
+  $('detailSheet').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div class="room" style="font-size:22px">แจ้งลูกค้าทาง LINE</div>
+      <button class="icon-btn" data-close aria-label="ปิด">✕</button>
+    </div>
+    <div class="box">
+      <div style="font-size:14px;line-height:1.6">เมื่อกด <b>ส่งสำเร็จ</b> ระบบจะส่งข้อความหาลูกค้าที่สั่งผ่าน LINE ทันที:</div>
+      <div style="margin-top:10px;background:#F2FBF4;border:1px solid #CDEBD5;border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.6;white-space:pre-line">🛵 ส่งถึงแล้วครับ!
+ออเดอร์ ORD-XXXXXX ถึงห้อง 512 เรียบร้อย
+ขอบคุณที่อุดหนุนไก่แหกปากนะครับ 🍗
+
+ถ้ายังไม่ได้รับของ ทักแชทนี้ได้เลยครับ</div>
+      <div style="margin-top:12px;font-size:14px">สถานะ: ${c.error ? '⚠️ โหลดไม่ได้' : c.has_token ? (c.notify_customers ? '✅ เปิดใช้งาน' : '⏸ ปิดอยู่') : '❌ ยังไม่ได้ใส่ token'}</div>
+      <label class="check"><input type="checkbox" id="lnOn" ${c.notify_customers !== false ? 'checked' : ''}> ส่งข้อความหาลูกค้าเมื่อกดส่งสำเร็จ</label>
+      <label class="field"><span>Channel access token (LINE OA ของร้าน)</span><input id="lnToken" type="password" autocomplete="off" placeholder="${c.has_token ? 'ตั้งไว้แล้ว — เว้นว่างถ้าไม่เปลี่ยน' : 'วาง token ที่นี่'}"></label>
+      <details style="margin-top:8px"><summary style="cursor:pointer;font-size:13px;font-weight:700">หา token ที่ไหน</summary>
+        <p style="margin-top:6px;font-size:12.5px;line-height:1.6">developers.line.biz → Provider <b>ไก่แหกปาก</b> → ช่อง <b>ไก่แหกปาก (Messaging API)</b> → แท็บ <b>Messaging API</b> → เลื่อนล่างสุด <b>Channel access token (long-lived)</b> → กด Copy แล้ววางช่องด้านบน<br>
+        • ส่งได้เฉพาะลูกค้าที่สั่งผ่าน LINE และยังเป็นเพื่อนกับ OA<br>• ข้อความนับรวมโควตาข้อความรายเดือนของ LINE OA</p></details>
+    </div>
+    <div class="err" id="editErr"></div>
+    <button class="btn btn-red" style="width:100%;min-height:54px;margin-top:6px" data-save-line>บันทึก</button>`;
+  $('detailOverlay').classList.add('show');
+}
+async function saveLineSettings(btn){
+  const err = m => { $('editErr').textContent = m; };
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
+  const { error } = await sb.rpc('kt_line_notify_set', { p_token: $('lnToken').value, p_on: $('lnOn').checked });
+  btn.disabled = false; btn.textContent = 'บันทึก';
+  if (error) return err('บันทึกไม่สำเร็จ: ' + (error.message || ''));
+  await loadLineCfg();
+  if ($('lnOn').checked && !lineCfg.has_token) return err('บันทึกแล้ว แต่ยังไม่มี token — ใส่ token ก่อนถึงจะส่งได้');
+  $('detailOverlay').classList.remove('show'); toast('บันทึกการแจ้งลูกค้าทาง LINE แล้ว');
+}
 async function deletePromo(){
   if (!confirm(`ลบ${editing.kind === 'announce' ? 'ประกาศ' : 'โปรโมชั่น'} “${editing.title}”?`)) return;
   const { error } = await sb.from('promotions').delete().eq('id', editing.id);
@@ -860,6 +909,8 @@ document.addEventListener('click', async e => {
     if (error){ toast('บันทึกไม่สำเร็จ'); return; }
     m.sold_out = !m.sold_out; renderMenu(); toast(m.sold_out ? `${m.name} → หมด` : `${m.name} → เปิดขาย`); return;
   }
+  if (t.id === 'lineBtn') return openLineSettings();
+  if (t.hasAttribute('data-save-line')) return saveLineSettings(t);
   if (t.id === 'openToggle'){
     const next = !shopOpen;
     if (!next && !confirm('ปิดรับออเดอร์ชั่วคราว?')) return;
